@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 import { SHELF_HEIGHT, ShelfView } from "./ShelfView";
 
-export const SHELF_SPACING = 10;
+export const SHELF_SPACING = 2;
 
 export class BookcaseView extends Phaser.GameObjects.Container {
   public readonly bookcaseIndex: number;
@@ -27,7 +27,7 @@ export class BookcaseView extends Phaser.GameObjects.Container {
     const shelfWidth = tempShelf.width;
     tempShelf.destroy();
 
-    const framePadding = 15;
+    const framePadding = 8;
     const frameWidth = shelfWidth + framePadding * 2;
     const frameHeight = totalHeight + framePadding * 2;
 

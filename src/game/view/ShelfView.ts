@@ -2,7 +2,7 @@ import * as Phaser from "phaser";
 import { SLOT_WIDTH, SlotView } from "./SlotView";
 
 export const SHELF_HEIGHT = 40;
-export const SLOT_SPACING = 4;
+export const SLOT_SPACING = 2;
 
 export class ShelfView extends Phaser.GameObjects.Container {
   public readonly shelfIndex: number;

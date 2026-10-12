@@ -54,7 +54,7 @@ export class BookView extends Phaser.GameObjects.Container {
     this.setInteractive();
 
     // <-- 3. Вешаем обработчик клика
-    this.on("pointerdown", () => {
+    this.once("pointerdown", () => {
       if (config.onClick) {
         config.onClick(this);
       }
@@ -93,8 +93,11 @@ export class BookView extends Phaser.GameObjects.Container {
         x: targetX,
         y: targetY,
         duration,
-        ease: "Power2",
-        onComplete: () => resolve(true),
+        ease: "Back.easeInOut",
+        onComplete: () => {
+          this.setAngle(0);
+          resolve(true);
+        },
       });
     });
   }

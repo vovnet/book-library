@@ -19,9 +19,20 @@ export class Game extends Scene {
     const row = new RowView(this, 400, 200, 0, 3, 6, 9);
     this.add.existing(row);
 
-    const floor = new FloorView(this, 450, 520, 800, 300, library.getBooksOnFloor(0), (book) => {
-      console.log("click: ", book.model);
-      book.flyTo(400, 720, 800);
-    });
+    const floor = new FloorView(
+      this,
+      450,
+      600,
+      800,
+      300,
+      library.getBooksOnFloor(0),
+      async (book) => {
+        await book.flyTo(400, 400, 800);
+        console.log("click: ", book.model);
+        library.hand.push(book.model);
+        book.model.location = "hand";
+        console.log(library.hand);
+      },
+    );
   }
 }

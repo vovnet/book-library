@@ -24,7 +24,7 @@ export class RowView extends Phaser.GameObjects.Container {
     const bookcaseHeight = tempBookcase.height;
     tempBookcase.destroy();
 
-    const bookcaseSpacing = 30;
+    const bookcaseSpacing = 10;
     const totalWidth = bookcasesCount * bookcaseWidth + (bookcasesCount - 1) * bookcaseSpacing;
 
     // Размещаем шкафы в ряд

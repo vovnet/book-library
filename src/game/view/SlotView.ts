@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 
-export const SLOT_WIDTH = 16;
+export const SLOT_WIDTH = 12;
 export const SLOT_HEIGHT = 28;
 
 export class SlotView extends Phaser.GameObjects.Container {
