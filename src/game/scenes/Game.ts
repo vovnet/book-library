@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { Library } from "../core/Library";
 
 export class Game extends Scene {
   constructor() {
@@ -21,5 +22,8 @@ export class Game extends Scene {
       })
       .setOrigin(0.5)
       .setDepth(100);
+
+    const library = new Library(1);
+    console.log(library.books);
   }
 }
