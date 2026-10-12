@@ -72,12 +72,26 @@ export class BookView extends Phaser.GameObjects.Container {
     });
   }
 
-  public async flyTo(x: number, y: number, duration: number = 0) {
+  public async flyTo(worldX: number, worldY: number, duration: number = 0) {
+    let targetX = worldX;
+    let targetY = worldY;
+
+    // Если у объекта есть родительский контейнер, трансформируем мировые координаты в локальные
+    if (this.parentContainer) {
+      const localPoint = new Phaser.Math.Vector2();
+
+      // Метод берет мировые координаты и трансформирует их с учетом матрицы родителя
+      this.parentContainer.getLocalPoint(worldX, worldY, localPoint);
+
+      targetX = localPoint.x;
+      targetY = localPoint.y;
+    }
+
     return new Promise((resolve) => {
       this.scene.tweens.add({
         targets: this,
-        x,
-        y,
+        x: targetX,
+        y: targetY,
         duration,
         ease: "Power2",
         onComplete: () => resolve(true),

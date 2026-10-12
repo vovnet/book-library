@@ -21,7 +21,7 @@ export class Game extends Scene {
 
     const floor = new FloorView(this, 450, 520, 800, 300, library.getBooksOnFloor(0), (book) => {
       console.log("click: ", book.model);
-      book.flyTo(-20, -20, 800);
+      book.flyTo(400, 720, 800);
     });
   }
 }
