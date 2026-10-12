@@ -28,6 +28,7 @@ export class Game extends Scene {
         y: 500,
         symbol: "A",
         model: { id: "book-1", location: "floor", targetSlotId: "" },
+        onClick: (book) => book.flyTo(0, 0, 1200),
       }),
     );
   }

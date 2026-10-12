@@ -8,7 +8,8 @@ export interface BookViewConfig {
   width: number;
   height: number;
   color: number;
-  symbol: string; // например: "A", "B", ""
+  symbol: string;
+  onClick?: (model: BookView) => void; // <-- 1. Добавляем коллбэк в конфиг
 }
 
 export class BookView extends Phaser.GameObjects.Container {
@@ -46,10 +47,44 @@ export class BookView extends Phaser.GameObjects.Container {
       .setOrigin(0.5);
     this.add(this.symbolText);
 
+    // Задаем размер контейнера для корректной работы hit-area (зоны клика)
     this.setSize(config.width, config.height);
+
+    // <-- 2. Делаем контейнер интерактивным
+    this.setInteractive();
+
+    // <-- 3. Вешаем обработчик клика
+    this.on("pointerdown", () => {
+      if (config.onClick) {
+        config.onClick(this);
+      }
+    });
+
+    // <-- 4. (Бонус) UX: меняем курсор и подсвечиваем книгу при наведении
+    this.on("pointerover", () => {
+      this.scene.input.setDefaultCursor("pointer"); // Курсор-рука
+      this.setHighlight(true);
+    });
+
+    this.on("pointerout", () => {
+      this.scene.input.setDefaultCursor("default"); // Обычный курсор
+      this.setHighlight(false);
+    });
   }
 
-  // Метод для подсветки (например, при наведении)
+  public async flyTo(x: number, y: number, duration: number = 0) {
+    return new Promise((resolve) => {
+      this.scene.tweens.add({
+        targets: this,
+        x,
+        y,
+        duration,
+        ease: "Power2",
+        onComplete: () => resolve(true),
+      });
+    });
+  }
+
   public setHighlight(enabled: boolean): void {
     if (enabled) {
       this.bg.lineStyle(3, 0xffff00, 1); // Желтая рамка
