@@ -1,5 +1,6 @@
 import { Scene } from "phaser";
 import { Library } from "../core/Library";
+import { RowView } from "../view/RowView";
 
 export class Game extends Scene {
   constructor() {
@@ -11,19 +12,10 @@ export class Game extends Scene {
   }
 
   create() {
-    this.add
-      .text(512, 490, "Make something fun!", {
-        fontFamily: "Arial Black",
-        fontSize: 38,
-        color: "#ffffff",
-        stroke: "#000000",
-        strokeThickness: 8,
-        align: "center",
-      })
-      .setOrigin(0.5)
-      .setDepth(100);
-
     const library = new Library(1);
-    console.log(library.books);
+    console.log({ ...library });
+
+    const row = new RowView(this, 400, 200, 0, 3, 6, 9);
+    this.add.existing(row);
   }
 }

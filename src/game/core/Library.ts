@@ -1,4 +1,4 @@
-import { Book, Bookcase, BookcaseRow, Shelf, ShelfSlot, Floor } from "./Types";
+import { Book, Bookcase, BookcaseRow, Shelf, ShelfSlot, Floor } from "./types";
 
 export class Library {
   public rows: BookcaseRow[];
