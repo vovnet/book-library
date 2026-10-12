@@ -1,7 +1,7 @@
 import { Scene } from "phaser";
 import { Library } from "../core/Library";
 import { RowView } from "../view/RowView";
-import { BookView } from "../view/BookView";
+import { FloorView } from "../view/FloorView";
 
 export class Game extends Scene {
   constructor() {
@@ -19,17 +19,9 @@ export class Game extends Scene {
     const row = new RowView(this, 400, 200, 0, 3, 6, 9);
     this.add.existing(row);
 
-    this.add.existing(
-      new BookView(this, {
-        color: 0xfff,
-        width: 20,
-        height: 30,
-        x: 400,
-        y: 500,
-        symbol: "A",
-        model: { id: "book-1", location: "floor", targetSlotId: "" },
-        onClick: (book) => book.flyTo(0, 0, 1200),
-      }),
-    );
+    const floor = new FloorView(this, 450, 520, 800, 300, library.getBooksOnFloor(0), (book) => {
+      console.log("click: ", book.model);
+      book.flyTo(-20, -20, 800);
+    });
   }
 }
