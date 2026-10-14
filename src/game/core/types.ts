@@ -1,38 +1,19 @@
+import { GameObjects } from "phaser";
+
+export type Location = "floor" | "hand" | "slot";
+
 export interface Book {
   id: string;
-  targetSlotId: string;
-  location: "slot" | "hand" | "floor";
+  targetSlotId: string; // Куда эта книга должна встать
+  location: Location; // Где она сейчас
+  view: GameObjects.Sprite;
 }
 
-export interface ShelfSlot {
-  id: string;
-  book: Book | null;
-  shelfIndex: number;
+export interface Slot {
+  id: string; // Уникальный ID, например "r0-b1-s2-slot3"
+  rowIndex: number; // Нужно только для того, чтобы View знала, где это рисовать
   bookcaseIndex: number;
-  rowIndex: number;
+  shelfIndex: number;
   slotIndex: number;
-}
-
-export interface Shelf {
-  id: string;
-  books: Array<Book | null>;
-  isComplete: boolean;
-}
-
-export interface Bookcase {
-  id: string;
-  shelves: Shelf[];
-  isComplete: boolean;
-}
-
-export interface BookcaseRow {
-  id: string;
-  bookcases: Bookcase[];
-  isComplete: boolean;
-}
-
-export interface Floor {
-  id: string;
-  rowIndex: number;
-  books: Book[];
+  book: Book | null; // Если null, слот пуст. Если есть объект, слот занят.
 }

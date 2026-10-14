@@ -1,6 +1,7 @@
 // core/EventBus.ts
 import { Events } from "phaser";
-import { SlotView } from "../view/SlotView";
+import { Slot } from "../view/Slot";
+import { Book } from "../view/Book";
 
 // Создаем единственный экземпляр шины событий на всю игру
 export const EventBus = new Events.EventEmitter();
@@ -8,9 +9,9 @@ export const EventBus = new Events.EventEmitter();
 // (Опционально, но очень рекомендуется для TypeScript)
 // Описываем типы событий, чтобы IDE давала подсказки
 export interface GameEvents {
-  "slot-clicked": (slotView: SlotView) => void;
-  "book-selected": (bookId: string) => void;
+  "slot-clicked": (slotView: Slot) => void;
   "level-completed": () => void;
+  "book-picked-up": (book: Book) => void;
 }
 
 // Типобезопасная обертка (чтобы не опечататься в названиях событий)

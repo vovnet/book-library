@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
-import { Book } from "../core/types"; // Укажите правильный путь к вашим типам
-import { BookView } from "./BookView"; // Укажите правильный путь к классу BookView
+import { Book } from "../core/types";
+import { BookView } from "./Book";
+import { emitEvent } from "../core/EventBus";
 
 export class FloorView extends Phaser.GameObjects.Container {
   private bookViews: Map<string, BookView> = new Map();
@@ -13,79 +14,83 @@ export class FloorView extends Phaser.GameObjects.Container {
     width: number,
     height: number,
     books: Book[],
-    onBookClick: (book: BookView) => void,
   ) {
     super(scene, x, y);
     scene.add.existing(this);
 
-    this.width = width;
-    this.height = height;
-
-    // 1. Рисуем фон пола (чтобы видеть границы, можно сделать прозрачным или текстурированным)
+    // 1. Рисуем фон пола
     this.bgGraphics = scene.add.graphics();
-    this.bgGraphics.fillStyle(0x8b4513, 0.15); // Коричневый, полупрозрачный
+    this.bgGraphics.fillStyle(0x8b4513, 0.15);
     this.bgGraphics.fillRoundedRect(-width / 2, -height / 2, width, height, 12);
     this.bgGraphics.lineStyle(2, 0x5d4037, 0.5);
     this.bgGraphics.strokeRoundedRect(-width / 2, -height / 2, width, height, 12);
     this.add(this.bgGraphics);
 
     // 2. Создаем и разбрасываем книги
-    const padding = 40; // Отступ от краев, чтобы книги не вылезали за границы
+    const padding = 40;
 
     books.forEach((book) => {
-      // Случайная позиция внутри контейнера (с учетом отступов)
       const randomX = Phaser.Math.Between(-width / 2 + padding, width / 2 - padding);
       const randomY = Phaser.Math.Between(-height / 2 + padding, height / 2 - padding);
-
-      // Случайный угол поворота для эффекта "беспорядка" (от -30 до 30 градусов)
       const randomRotation = Phaser.Math.DegToRad(Phaser.Math.Between(-30, 30));
 
-      // Создаем визуальное представление книги
-      const bookView = new BookView(scene, {
-        x: randomX,
-        y: randomY,
-        model: book,
-        color: 0xaa4,
-        width: 20,
-        height: 30,
-        symbol: "a",
-        onClick: onBookClick,
-      });
+      const bookView = new BookView(scene, randomX, randomY, book);
       bookView.setRotation(randomRotation);
 
-      // Добавляем в контейнер пола и сохраняем ссылку
+      // 🌟 Ловим клик прямо здесь, чтобы управлять визуальным перемещением
+      bookView.on("pointerdown", () => {
+        this.handleBookPickup(bookView);
+      });
+
       this.add(bookView);
       this.bookViews.set(book.id, bookView);
     });
   }
 
-  /**
-   * Удаляет книгу с пола визуально (например, когда игрок взял её в руку)
-   */
-  public removeBookFromFloor(bookId: string): void {
-    const bookView = this.bookViews.get(bookId);
-    if (bookView) {
-      // Можно добавить анимацию исчезновения перед удалением
-      this.scene.tweens.add({
-        targets: bookView,
-        alpha: 0,
-        scale: 0.5,
-        duration: 200,
-        onComplete: () => {
-          bookView.destroy();
-          this.bookViews.delete(bookId);
-        },
-      });
-    }
+  // 🌟 МАГИЯ ПОЛЕТА КНИГИ В РУКУ
+  private handleBookPickup(bookView: BookView) {
+    const bookId = bookView.model.id;
+
+    // Шаг 1: Получаем текущие ГЛОБАЛЬНЫЕ координаты книги
+    const worldPoint = bookView.getWorldPoint(new Phaser.Math.Vector2());
+
+    // Шаг 2: "Вырываем" книгу из контейнера пола и добавляем прямо в сцену.
+    // Теперь её x и y глобальны, и анимация в центр экрана сработает корректно!
+    this.remove(bookView);
+    this.scene.add.existing(bookView);
+
+    // Шаг 3: Возвращаем её на те же глобальные координаты, чтобы не было визуального скачка
+    bookView.setPosition(worldPoint.x, worldPoint.y);
+
+    // Шаг 4: Поднимаем на передний план, чтобы она летела ПОВЕРХ всех шкафов
+    bookView.setDepth(1000);
+
+    // Шаг 5: Запускаем анимацию полета в центр экрана (или чуть ниже, в зону "руки")
+    const targetX = this.scene.cameras.main.centerX;
+    const targetY = this.scene.cameras.main.centerY + 200; // Зона руки внизу центра
+
+    this.scene.tweens.add({
+      targets: bookView,
+      x: targetX,
+      y: targetY,
+      rotation: 0, // Выравниваем книгу, чтобы она стояла ровно
+      scale: 1.2, // Чуть увеличиваем, показывая, что она теперь "в руке"
+      duration: 400,
+      ease: "Back.out", // Красивая анимация с легким "влетанием" в цель
+      onComplete: () => {
+        // Шаг 6: Сообщаем шине событий, что книга успешно долетела
+        emitEvent("book-picked-up", bookId);
+
+        // Удаляем из маппинга пола, так как она теперь управляется сценой/рукой
+        this.bookViews.delete(bookId);
+      },
+    });
   }
 
-  /**
-   * Правильная очистка ресурсов при уничтожении сцены
-   */
   public destroy(fromScene?: boolean): void {
     this.bookViews.forEach((view) => view.destroy());
     this.bookViews.clear();
-    super.destroy(fromScene);
     this.bgGraphics.destroy();
+    super.destroy(fromScene);
   }
 }
