@@ -1,57 +1,85 @@
 import * as Phaser from "phaser";
-
-export const SLOT_WIDTH = 12;
-export const SLOT_HEIGHT = 28;
+import { ShelfSlot } from "../core/types";
+import { SLOT_HEIGHT, SLOT_WIDTH } from "../core/libConfig";
 
 export class SlotView extends Phaser.GameObjects.Container {
-  public readonly slotIndex: number;
-  private highlightGraphics: Phaser.GameObjects.Graphics;
-  private baseGraphics: Phaser.GameObjects.Graphics;
+  public slotData: ShelfSlot;
+  public currentBook: Phaser.GameObjects.Sprite | null = null;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, slotIndex: number) {
+  // Элемент для мигающей рамки
+  private highlightBorder: Phaser.GameObjects.Rectangle;
+  private highlightTween: Phaser.Tweens.Tween | null = null;
+
+  constructor(scene: Phaser.Scene, x: number, y: number, slotData: ShelfSlot) {
     super(scene, x, y);
-    this.slotIndex = slotIndex;
+    this.slotData = slotData;
 
-    const slotWidth = SLOT_WIDTH;
-    const slotHeight = SLOT_HEIGHT;
+    // 1. Едва заметная подложка (чтобы задавать область, alpha можно поставить 0)
+    const bg = scene.add.rectangle(0, 0, SLOT_WIDTH, SLOT_HEIGHT, 0x5c4033, 0.1);
+    this.add(bg);
 
-    // Базовый фон слота (полупрозрачный)
-    this.baseGraphics = scene.add.graphics();
-    this.baseGraphics.fillStyle(0xffffff, 0.1);
-    this.baseGraphics.fillRoundedRect(-slotWidth / 2, -slotHeight / 2, slotWidth, slotHeight, 4);
-    this.baseGraphics.lineStyle(1, 0x888888, 0.5);
-    this.baseGraphics.strokeRoundedRect(-slotWidth / 2, -slotHeight / 2, slotWidth, slotHeight, 4);
-    this.add(this.baseGraphics);
-
-    // Графика для подсветки (скрыта по умолчанию)
-    this.highlightGraphics = scene.add.graphics();
-    this.highlightGraphics.fillStyle(0x00ff00, 0.3);
-    this.highlightGraphics.fillRoundedRect(
-      -slotWidth / 2,
-      -slotHeight / 2,
-      slotWidth,
-      slotHeight,
-      4,
+    // 2. Мигающая рамка (изначально скрыта)
+    // Делаем её чуть больше слота (padding = 4), чтобы рамка была снаружи
+    const padding = 4;
+    this.highlightBorder = scene.add.rectangle(
+      0,
+      0,
+      SLOT_WIDTH + padding * 2,
+      SLOT_HEIGHT + padding * 2,
+      0x000000,
+      0, // Цвет и альфа заливки не важны, важна обводка
     );
-    this.highlightGraphics.lineStyle(2, 0x00ff00, 1);
-    this.highlightGraphics.strokeRoundedRect(
-      -slotWidth / 2,
-      -slotHeight / 2,
-      slotWidth,
-      slotHeight,
-      4,
-    );
-    this.highlightGraphics.setVisible(false);
-    this.add(this.highlightGraphics);
+    this.highlightBorder.setStrokeStyle(2, 0xffffff); // Белая рамка толщиной 2px
+    this.highlightBorder.setAlpha(0); // Скрываем по умолчанию
+    this.add(this.highlightBorder);
 
-    this.setSize(slotWidth, slotHeight);
+    // 3. Делаем ВЕСЬ контейнер интерактивным для кликов.
+    // Явно задаем область попадания, чтобы клики работали даже при alpha = 0 у фона
+    this.setInteractive(
+      new Phaser.Geom.Rectangle(-SLOT_WIDTH / 2, -SLOT_HEIGHT / 2, SLOT_WIDTH, SLOT_HEIGHT),
+      Phaser.Geom.Rectangle.Contains,
+    );
   }
 
-  public setHighlight(isHighlighted: boolean): void {
-    this.highlightGraphics.setVisible(isHighlighted);
+  // Поместить книгу в слот (или убрать её, передав null)
+  public setBook(bookView: Phaser.GameObjects.Sprite | null) {
+    if (this.currentBook) {
+      this.remove(this.currentBook);
+      this.currentBook.destroy();
+    }
+    this.currentBook = bookView;
+    if (bookView) {
+      this.add(bookView);
+    }
   }
 
-  public getBoundsRect(): Phaser.Geom.Rectangle {
-    return this.getBounds();
+  // Включить/выключить мигающую подсветку-подсказку
+  public setHighlight(isActive: boolean) {
+    if (isActive) {
+      // Если твин уже запущен, не создаем новый (защита от наложения)
+      if (!this.highlightTween) {
+        this.highlightTween = this.scene.tweens.add({
+          targets: this.highlightBorder,
+          alpha: { from: 0.3, to: 1 }, // Мигание от 30% до 100% видимости
+          duration: 600, // Скорость мигания (мс)
+          yoyo: true, // Туда и обратно
+          repeat: -1, // Бесконечно
+          ease: "Sine.easeInOut", // Плавная анимация
+        });
+      }
+    } else {
+      // Останавливаем анимацию и скрываем рамку
+      if (this.highlightTween) {
+        this.highlightTween.stop();
+        this.highlightTween = null;
+      }
+      this.highlightBorder.setAlpha(0);
+    }
+  }
+
+  // ВАЖНО: Очищаем твин при уничтожении слота, чтобы не было утечек памяти
+  public destroy(fromScene?: boolean): void {
+    this.setHighlight(false); // Гарантированно останавливаем твин
+    super.destroy(fromScene);
   }
 }

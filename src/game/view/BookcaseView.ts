@@ -1,54 +1,62 @@
 import * as Phaser from "phaser";
-import { SHELF_HEIGHT, ShelfView } from "./ShelfView";
-
-export const SHELF_SPACING = 2;
+import { ShelfView } from "./ShelfView";
+import { SHELF_GAP, SHELF_HEIGHT, SLOT_WIDTH } from "../core/libConfig";
+import { Bookcase, ShelfSlot } from "../core/types";
 
 export class BookcaseView extends Phaser.GameObjects.Container {
-  public readonly bookcaseIndex: number;
-  public readonly shelves: ShelfView[] = [];
+  public bookcaseData: Bookcase;
+  public shelves: ShelfView[] = [];
 
   constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
-    bookcaseIndex: number,
-    shelvesCount: number,
-    slotsPerShelf: number,
+    bookcaseData: Bookcase,
+    rowIndex: number,
+    slotsMap: Map<string, ShelfSlot>,
   ) {
     super(scene, x, y);
-    this.bookcaseIndex = bookcaseIndex;
+    this.bookcaseData = bookcaseData;
 
-    const shelfHeight = SHELF_HEIGHT;
-    const shelfSpacing = SHELF_SPACING;
-    const totalHeight = shelvesCount * shelfHeight + (shelvesCount - 1) * shelfSpacing;
+    // Чтобы узнать ширину, смотрим на первую полку (все полки одинаковой ширины)
+    const firstShelfSlotsCount = bookcaseData.shelves[0].books.length;
+    const contentWidth = firstShelfSlotsCount * SLOT_WIDTH + (firstShelfSlotsCount - 1) * 2; // SLOT_WIDTH и GAP
+    const frameWidth = contentWidth + 2; // SHELF_PADDING_X * 2
+    const totalHeight =
+      bookcaseData.shelves.length * SHELF_HEIGHT + (bookcaseData.shelves.length - 1) * SHELF_GAP;
 
-    // Временный элемент для расчета ширины
-    const tempShelf = new ShelfView(scene, 0, 0, 0, slotsPerShelf);
-    const shelfWidth = tempShelf.width;
-    tempShelf.destroy();
-
-    const framePadding = 8;
-    const frameWidth = shelfWidth + framePadding * 2;
-    const frameHeight = totalHeight + framePadding * 2;
-
-    // Каркас шкафа (задняя стенка и боковины)
+    // 1. Рисуем каркас шкафа (задняя стенка)
     const frame = scene.add.graphics();
-    frame.fillStyle(0x3e2b22, 1); // Темное дерево
-    frame.fillRoundedRect(-frameWidth / 2, -frameHeight / 2, frameWidth, frameHeight, 8);
-    frame.lineStyle(3, 0x2a1d17, 1);
-    frame.strokeRoundedRect(-frameWidth / 2, -frameHeight / 2, frameWidth, frameHeight, 8);
+    frame.fillStyle(0x2a1d17, 1); // Темная рамка
+    frame.fillRoundedRect(
+      -frameWidth / 2 - 4,
+      -totalHeight / 2 - 4,
+      frameWidth + 8,
+      totalHeight + 8,
+      4,
+    );
+    frame.fillStyle(0x5c4033, 1); // Внутренняя часть
+    frame.fillRoundedRect(-frameWidth / 2, -totalHeight / 2, frameWidth, totalHeight, 2);
     this.add(frame);
 
-    // Размещаем полки внутри шкафа
-    let currentY = -totalHeight / 2 + shelfHeight / 2;
-    for (let i = 0; i < shelvesCount; i++) {
-      const shelf = new ShelfView(scene, 0, currentY, i, slotsPerShelf);
-      this.shelves.push(shelf);
-      this.add(shelf);
-      currentY += shelfHeight + shelfSpacing;
-    }
+    // 2. Размещаем полки
+    let currentY = -totalHeight / 2 + SHELF_HEIGHT / 2;
+    const shelfIndexNum = parseInt(bookcaseData.id.split("-")[2], 10);
 
-    this.setSize(frameWidth, frameHeight);
+    bookcaseData.shelves.forEach((shelfData) => {
+      const shelfView = new ShelfView(
+        scene,
+        0,
+        currentY,
+        shelfData,
+        rowIndex,
+        shelfIndexNum,
+        slotsMap,
+      );
+      this.shelves.push(shelfView);
+      this.add(shelfView);
+      currentY += SHELF_HEIGHT + SHELF_GAP;
+    });
   }
 
   public getShelfView(shelfIndex: number): ShelfView | undefined {

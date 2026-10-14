@@ -1,60 +1,66 @@
 import * as Phaser from "phaser";
 import { BookcaseView } from "./BookcaseView";
-import { SlotView } from "./SlotView";
+import { BOOKCASE_GAP, SLOT_WIDTH } from "../core/libConfig";
+import { BookcaseRow, ShelfSlot } from "../core/types";
 
 export class RowView extends Phaser.GameObjects.Container {
-  public readonly rowIndex: number;
-  public readonly bookcases: BookcaseView[] = [];
+  public rowData: BookcaseRow;
+  public bookcases: BookcaseView[] = [];
 
   constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
-    rowIndex: number,
-    bookcasesCount: number,
-    shelvesPerBookcase: number,
-    slotsPerShelf: number,
+    rowData: BookcaseRow,
+    slotsMap: Map<string, ShelfSlot>,
   ) {
     super(scene, x, y);
-    this.rowIndex = rowIndex;
+    this.rowData = rowData;
 
-    // Создаем временный шкаф для замера ширины
-    const tempBookcase = new BookcaseView(scene, 0, 0, 0, shelvesPerBookcase, slotsPerShelf);
-    const bookcaseWidth = tempBookcase.width;
-    const bookcaseHeight = tempBookcase.height;
-    tempBookcase.destroy();
+    // Вычисляем ширину одного шкафа (берем данные из первого шкафа)
+    const firstBookcase = rowData.bookcases[0];
+    const firstShelfSlotsCount = firstBookcase.shelves[0].books.length;
+    const singleBookcaseWidth =
+      firstShelfSlotsCount * SLOT_WIDTH + (firstShelfSlotsCount - 1) * 1 + SLOT_WIDTH; // ширина + паддинги + рамка
+    const singleBookcaseHeight =
+      firstBookcase.shelves.length * 60 + (firstBookcase.shelves.length - 1) * 8; // SHELF_HEIGHT и GAP
 
-    const bookcaseSpacing = 10;
-    const totalWidth = bookcasesCount * bookcaseWidth + (bookcasesCount - 1) * bookcaseSpacing;
+    const totalWidth =
+      rowData.bookcases.length * singleBookcaseWidth +
+      (rowData.bookcases.length - 1) * BOOKCASE_GAP;
 
-    // Размещаем шкафы в ряд
-    let currentX = -totalWidth / 2 + bookcaseWidth / 2;
-    for (let i = 0; i < bookcasesCount; i++) {
-      const bookcase = new BookcaseView(scene, currentX, 0, i, shelvesPerBookcase, slotsPerShelf);
-      this.bookcases.push(bookcase);
-      this.add(bookcase);
-      currentX += bookcaseWidth + bookcaseSpacing;
-    }
+    // Размещаем шкафы
+    let currentX = -totalWidth / 2 + singleBookcaseWidth / 2;
+    const rowIndexNum = parseInt(rowData.id.split("-")[1], 10);
 
-    this.setSize(totalWidth, bookcaseHeight);
+    rowData.bookcases.forEach((bookcaseData) => {
+      const bookcaseView = new BookcaseView(
+        scene,
+        currentX,
+        0,
+        bookcaseData,
+        rowIndexNum,
+        slotsMap,
+      );
+      this.bookcases.push(bookcaseView);
+      this.add(bookcaseView);
+      currentX += singleBookcaseWidth + BOOKCASE_GAP;
+    });
+
+    this.setSize(totalWidth, singleBookcaseHeight);
   }
 
-  public getBookcaseView(bookcaseIndex: number): BookcaseView | undefined {
-    return this.bookcases[bookcaseIndex];
-  }
-
-  // Удобный метод для получения конкретного слота по полным координатам
+  // Удобный метод для поиска слота "извне"
   public getSlotView(
     bookcaseIndex: number,
     shelfIndex: number,
     slotIndex: number,
-  ): SlotView | undefined {
-    const bookcase = this.getBookcaseView(bookcaseIndex);
-    if (!bookcase) return undefined;
-
-    const shelf = bookcase.getShelfView(shelfIndex);
+  ): Phaser.GameObjects.Container | undefined {
+    const bc = this.bookcases[bookcaseIndex];
+    if (!bc) return undefined;
+    const shelf = bc.getShelfView(shelfIndex);
     if (!shelf) return undefined;
-
-    return shelf.getSlotView(slotIndex);
+    const slot = shelf.getSlotView(slotIndex);
+    return slot ? slot : undefined;
   }
 }
