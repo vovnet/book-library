@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import { ShelfSlot } from "../core/types";
 import { SLOT_HEIGHT, SLOT_WIDTH } from "../core/libConfig";
+import { emitEvent } from "../core/EventBus";
 
 export class SlotView extends Phaser.GameObjects.Container {
   public slotData: ShelfSlot;
@@ -18,14 +19,11 @@ export class SlotView extends Phaser.GameObjects.Container {
     const bg = scene.add.rectangle(0, 0, SLOT_WIDTH, SLOT_HEIGHT, 0x5c4033, 0.1);
     this.add(bg);
 
-    // 2. Мигающая рамка (изначально скрыта)
-    // Делаем её чуть больше слота (padding = 4), чтобы рамка была снаружи
-    const padding = 4;
     this.highlightBorder = scene.add.rectangle(
       0,
       0,
-      SLOT_WIDTH + padding * 2,
-      SLOT_HEIGHT + padding * 2,
+      SLOT_WIDTH,
+      SLOT_HEIGHT,
       0x000000,
       0, // Цвет и альфа заливки не важны, важна обводка
     );
@@ -39,6 +37,10 @@ export class SlotView extends Phaser.GameObjects.Container {
       new Phaser.Geom.Rectangle(-SLOT_WIDTH / 2, -SLOT_HEIGHT / 2, SLOT_WIDTH, SLOT_HEIGHT),
       Phaser.Geom.Rectangle.Contains,
     );
+
+    this.on("pointerdown", () => {
+      emitEvent("slot-clicked", this);
+    });
   }
 
   // Поместить книгу в слот (или убрать её, передав null)

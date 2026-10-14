@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 import { BookcaseView } from "./BookcaseView";
 import { BOOKCASE_GAP, SLOT_WIDTH } from "../core/libConfig";
 import { BookcaseRow, ShelfSlot } from "../core/types";
+import { SlotView } from "./SlotView";
 
 export class RowView extends Phaser.GameObjects.Container {
   public rowData: BookcaseRow;
@@ -55,7 +56,7 @@ export class RowView extends Phaser.GameObjects.Container {
     bookcaseIndex: number,
     shelfIndex: number,
     slotIndex: number,
-  ): Phaser.GameObjects.Container | undefined {
+  ): SlotView | undefined {
     const bc = this.bookcases[bookcaseIndex];
     if (!bc) return undefined;
     const shelf = bc.getShelfView(shelfIndex);

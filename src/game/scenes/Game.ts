@@ -3,6 +3,7 @@ import { Library } from "../core/Library";
 import { RowView } from "../view/RowView";
 import { FloorView } from "../view/FloorView";
 import { BookView } from "../view/BookView";
+import { onEvent } from "../core/EventBus";
 
 export class Game extends Scene {
   private library: Library;
@@ -26,6 +27,14 @@ export class Game extends Scene {
       this.rowViews.push(rowView);
       this.add.existing(rowView);
     });
+
+    onEvent(
+      "slot-clicked",
+      (slot) => {
+        slot.setHighlight(true);
+      },
+      this,
+    );
 
     const floor = new FloorView(
       this,
