@@ -11,14 +11,14 @@ import { LevelFeedbackManager } from "../core/LevelFeedbackManager";
 
 export class Game extends Scene {
   private readonly CONFIG = {
-    bookcasesCount: 6,
-    bookcaseGapX: 20,
+    bookcasesCount: 3,
+    bookcaseGapX: 76,
     shelvesCount: 6,
     slotsPerShelf: 9,
     slotWidth: 18,
     slotHeight: 32,
     gapX: 1,
-    gapY: 4,
+    gapY: 8,
     startY: 80,
   };
 
@@ -47,7 +47,6 @@ export class Game extends Scene {
   create() {
     this.handManager = new HandManager(this, this.levelConfig.pickupStrategy);
     this.feedback = new LevelFeedbackManager(this);
-    // 1. НАСТРОЙКИ ГЕНЕРАЦИИ
 
     const {
       bookcasesCount,
@@ -66,20 +65,34 @@ export class Game extends Scene {
     const outlineHeight = slotHeight + padding * 2;
 
     // 🌟 1. ВЫЧИСЛЕНИЕ ЦЕНТРИРОВАНИЯ
-    // Общая ширина всех шкафов + все промежутки между ними
     const totalWidth = bookcasesCount * outlineWidth + (bookcasesCount - 1) * bookcaseGapX;
-
-    // Получаем ширину игрового экрана и находим стартовую точку X
     const screenWidth = this.scale.width;
     const startX = (screenWidth - totalWidth) / 2;
 
+    // Вычисляем центр по Y для всего блока полок (он одинаков для всех шкафов)
+    const totalShelvesHeight = shelvesCount * (slotHeight + gapY);
+    const centerShelvesY = startY - 14 + totalShelvesHeight / 2;
+
     // 2. ГЕНЕРАЦИЯ ШКАФОВ, ПОЛОК И СЛОТОВ
     for (let b = 0; b < bookcasesCount; b++) {
-      // Базовая X-координата для слотов текущего шкафа
       const currentStartX = startX + b * (outlineWidth + bookcaseGapX);
+      const outlineX = currentStartX - 7;
+
+      // 🌟 2.1 ДОБАВЛЯЕМ ИЗОБРАЖЕНИЕ ШКАФА "КАК ЕСТЬ"
+      // Находим центр текущей зоны слотов по X
+      const bookcaseCenterX = currentStartX + outlineWidth / 2;
+
+      const bookcaseBg = this.add.image(bookcaseCenterX, centerShelvesY, "bookcase");
+      bookcaseBg.x -= 7;
+      bookcaseBg.y -= 10;
+      bookcaseBg.setScale(0.92).setDepth(0); // 🌟 Убираем на самый задний план
+
+      // 💡 СОВЕТ: Если твой арт имеет специфическую точку привязки (origin)
+      // и визуально немного смещен относительно слотов, подправь его здесь:
+      // bookcaseBg.x += 10; // Сдвинуть вправо на 10px
+      // bookcaseBg.y -= 5;  // Сдвинуть вверх на 5px
 
       for (let s = 0; s < shelvesCount; s++) {
-        const outlineX = currentStartX - 7;
         const outlineY = startY - 14 + s * (slotHeight + gapY);
 
         const shelf = new Shelf(this, outlineX, outlineY, outlineWidth, outlineHeight, b, s);
@@ -102,15 +115,12 @@ export class Game extends Scene {
 
     // 3. РАЗБРАСЫВАЕМ КНИГИ ПО ПОЛУ
     this.books.forEach((book) => {
-      // Случайная позиция в нижней части экрана (зона "пола")
-      const floorX = Phaser.Math.Between(50, 1200);
+      const floorX = Phaser.Math.Between(50, screenWidth - 50);
       const floorY = Phaser.Math.Between(500, 640);
 
       book.setPosition(floorX, floorY);
-      book.setRotation(Phaser.Math.DegToRad(Phaser.Math.Between(-45, 45))); // Случайный наклон
-
-      // Устанавливаем глубину, чтобы книги на полу были под книгами в руке
-      book.setDepth(5);
+      book.setRotation(Phaser.Math.DegToRad(Phaser.Math.Between(-45, 45)));
+      book.setDepth(5); // Книги на полу выше фона (0), но ниже руки (100+)
       this.add.existing(book);
     });
 
