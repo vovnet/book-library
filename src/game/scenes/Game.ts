@@ -10,6 +10,8 @@ import { LevelConfig } from "../core/types";
 
 export class Game extends Scene {
   private readonly CONFIG = {
+    bookcasesCount: 5,
+    bookcaseGapX: 20,
     shelvesCount: 6,
     slotsPerShelf: 9,
     slotWidth: 18,
@@ -45,39 +47,52 @@ export class Game extends Scene {
     this.handManager = new HandManager(this, this.levelConfig.pickupStrategy);
     // 1. НАСТРОЙКИ ГЕНЕРАЦИИ
 
-    const { shelvesCount, slotsPerShelf, slotWidth, slotHeight, gapX, gapY, startX, startY } =
-      this.CONFIG;
+    const {
+      bookcasesCount,
+      bookcaseGapX,
+      shelvesCount,
+      slotsPerShelf,
+      slotWidth,
+      slotHeight,
+      gapX,
+      gapY,
+      startX,
+      startY,
+    } = this.CONFIG;
 
-    // Предварительный расчет размеров контура полки
     const padding = 0;
     const outlineWidth = slotsPerShelf * slotWidth + (slotsPerShelf - 1) * gapX + padding * 2;
     const outlineHeight = slotHeight + padding * 2;
 
-    // 2. ГЕНЕРАЦИЯ СЛОТОВ И КНИГ
-    for (let s = 0; s < shelvesCount; s++) {
-      // 1. Создаем объект полки
-      const outlineX = startX - 7;
-      const outlineY = startY - 14 + s * (slotHeight + gapY);
+    // 🌟 Вычисляем полную ширину одного шкафа для правильного сдвига
+    const singleBookcaseWidth = outlineWidth + 14; // 14 - это компенсация смещения outlineX (-7) * 2
 
-      const shelf = new Shelf(this, outlineX, outlineY, outlineWidth, outlineHeight, s);
-      this.shelves.push(shelf);
+    // 1. ГЕНЕРАЦИЯ ШКАФОВ, ПОЛОК И СЛОТОВ
+    for (let b = 0; b < bookcasesCount; b++) {
+      // Сдвигаем startX для каждого следующего шкафа
+      const currentStartX = startX + b * (singleBookcaseWidth + bookcaseGapX);
 
-      for (let i = 0; i < slotsPerShelf; i++) {
-        // Формируем уникальный ID, который будет одинаковым у слота и книги
-        const itemId = `r0-b0-sh${s}-sl${i}`;
+      for (let s = 0; s < shelvesCount; s++) {
+        const outlineX = currentStartX - 7;
+        const outlineY = startY - 14 + s * (slotHeight + gapY);
 
-        // Вычисляем координаты слота на полке
-        const slotX = startX + 2 + i * (slotWidth + gapX);
-        const slotY = startY + 2 + s * (slotHeight + gapY);
+        // 🌟 Передаем и индекс шкафа, и индекс полки
+        const shelf = new Shelf(this, outlineX, outlineY, outlineWidth, outlineHeight, b, s);
+        this.shelves.push(shelf);
 
-        // Создаем слот и добавляем в сцену и в наш массив
-        const slot = new Slot(this, slotX, slotY, itemId);
-        this.add.existing(slot);
-        this.slots.push(slot);
+        for (let i = 0; i < slotsPerShelf; i++) {
+          // 🌟 Динамический ID с индексом шкафа (b)
+          const itemId = `r0-b${b}-sh${s}-sl${i}`;
+          const slotX = currentStartX + 2 + i * (slotWidth + gapX);
+          const slotY = startY + 2 + s * (slotHeight + gapY);
 
-        // Создаем книгу с тем же ID
-        const book = new Book(this, 0, 0, itemId);
-        this.books.push(book);
+          const slot = new Slot(this, slotX, slotY, itemId);
+          this.add.existing(slot);
+          this.slots.push(slot);
+
+          const book = new Book(this, 0, 0, itemId);
+          this.books.push(book);
+        }
       }
     }
 

@@ -2,13 +2,23 @@ import { Scene, GameObjects, Geom } from "phaser";
 import { emitEvent } from "../core/EventBus";
 
 export class Shelf {
-  public readonly index: number;
+  public readonly bookcaseIndex: number; // 🌟 Добавляем индекс шкафа
+  public readonly shelfIndex: number;
   private outline: GameObjects.Graphics;
   private scene: Scene;
 
-  constructor(scene: Scene, x: number, y: number, width: number, height: number, index: number) {
+  constructor(
+    scene: Scene,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    bookcaseIndex: number,
+    shelfIndex: number,
+  ) {
     this.scene = scene;
-    this.index = index;
+    this.bookcaseIndex = bookcaseIndex;
+    this.shelfIndex = shelfIndex;
 
     // Создаем и настраиваем контур
     this.outline = scene.add.graphics();
@@ -31,21 +41,13 @@ export class Shelf {
     this.outline.setVisible(active);
   }
 
-  // 🌟 Проверяет, принадлежит ли книга этой полке
-  public containsBook(bookId: string): boolean {
-    // bookId имеет вид "r0-b0-sh2-sl3"
-    // Извлекаем индекс полки из ID книги
-    const parts = bookId.split("-");
-    const bookShelfIndex = parseInt(parts[2].replace("sh", ""), 10);
-
-    return bookShelfIndex === this.index;
-  }
-
   public containsId(id: string): boolean {
     const parts = id.split("-");
-    if (parts.length >= 3) {
+    if (parts.length >= 4) {
+      const targetBookcaseIndex = parseInt(parts[1].replace("b", ""), 10);
       const targetShelfIndex = parseInt(parts[2].replace("sh", ""), 10);
-      return targetShelfIndex === this.index;
+
+      return targetBookcaseIndex === this.bookcaseIndex && targetShelfIndex === this.shelfIndex;
     }
     return false;
   }
