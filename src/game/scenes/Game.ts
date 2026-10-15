@@ -170,6 +170,8 @@ export class Game extends Scene {
     this.handManager.removeBook(book);
     slot.setBook(book);
 
+    this.showFloatingText(slot.x, slot.y, "+1", "#feffc1");
+
     this.updateHighlights();
   }
 
@@ -190,6 +192,35 @@ export class Game extends Scene {
       if (mode === "shelves") {
         this.shelves.find((s) => s.containsId(book.id))?.setHighlight(true);
       }
+    });
+  }
+
+  // 🌟 НОВЫЙ МЕТОД: Показ всплывающего текста
+  private showFloatingText(x: number, y: number, text: string, color: string = "#00ff00") {
+    // Создаем текст чуть выше целевой точки
+    const floatingText = this.add
+      .text(x, y - 10, text, {
+        fontSize: "26px",
+        color: color,
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 3, // Обводка для читаемости на любом фоне
+      })
+      .setOrigin(0.5);
+
+    // Поднимаем текст над всеми элементами полки и книги
+    floatingText.setDepth(150);
+
+    // Анимируем: движение вверх и исчезновение
+    this.tweens.add({
+      targets: floatingText,
+      y: y - 40, // Конечная позиция Y (выше)
+      alpha: 0, // Полная прозрачность в конце
+      duration: 800, // Длительность анимации в мс
+      ease: "Power2", // Плавное замедление
+      onComplete: () => {
+        floatingText.destroy(); // 🌟 КРИТИЧЕСКИ ВАЖНО: уничтожаем объект после анимации
+      },
     });
   }
 
