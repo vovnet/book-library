@@ -10,7 +10,7 @@ import { LevelConfig } from "../core/types";
 
 export class Game extends Scene {
   private readonly CONFIG = {
-    bookcasesCount: 5,
+    bookcasesCount: 6,
     bookcaseGapX: 20,
     shelvesCount: 6,
     slotsPerShelf: 9,
@@ -18,7 +18,6 @@ export class Game extends Scene {
     slotHeight: 32,
     gapX: 1,
     gapY: 4,
-    startX: 120,
     startY: 80,
   };
 
@@ -35,7 +34,7 @@ export class Game extends Scene {
     super("Game");
 
     this.levelConfig = config?.levelConfig || {
-      pickupStrategy: new HoverPickupStrategy(5),
+      pickupStrategy: new HoverPickupStrategy(15),
       placementEventName: "shelf-clicked",
       resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
       // resolveTargets: (slot: Slot) => [slot],
@@ -56,7 +55,6 @@ export class Game extends Scene {
       slotHeight,
       gapX,
       gapY,
-      startX,
       startY,
     } = this.CONFIG;
 
@@ -64,24 +62,27 @@ export class Game extends Scene {
     const outlineWidth = slotsPerShelf * slotWidth + (slotsPerShelf - 1) * gapX + padding * 2;
     const outlineHeight = slotHeight + padding * 2;
 
-    // 🌟 Вычисляем полную ширину одного шкафа для правильного сдвига
-    const singleBookcaseWidth = outlineWidth + 14; // 14 - это компенсация смещения outlineX (-7) * 2
+    // 🌟 1. ВЫЧИСЛЕНИЕ ЦЕНТРИРОВАНИЯ
+    // Общая ширина всех шкафов + все промежутки между ними
+    const totalWidth = bookcasesCount * outlineWidth + (bookcasesCount - 1) * bookcaseGapX;
 
-    // 1. ГЕНЕРАЦИЯ ШКАФОВ, ПОЛОК И СЛОТОВ
+    // Получаем ширину игрового экрана и находим стартовую точку X
+    const screenWidth = this.scale.width;
+    const startX = (screenWidth - totalWidth) / 2;
+
+    // 2. ГЕНЕРАЦИЯ ШКАФОВ, ПОЛОК И СЛОТОВ
     for (let b = 0; b < bookcasesCount; b++) {
-      // Сдвигаем startX для каждого следующего шкафа
-      const currentStartX = startX + b * (singleBookcaseWidth + bookcaseGapX);
+      // Базовая X-координата для слотов текущего шкафа
+      const currentStartX = startX + b * (outlineWidth + bookcaseGapX);
 
       for (let s = 0; s < shelvesCount; s++) {
         const outlineX = currentStartX - 7;
         const outlineY = startY - 14 + s * (slotHeight + gapY);
 
-        // 🌟 Передаем и индекс шкафа, и индекс полки
         const shelf = new Shelf(this, outlineX, outlineY, outlineWidth, outlineHeight, b, s);
         this.shelves.push(shelf);
 
         for (let i = 0; i < slotsPerShelf; i++) {
-          // 🌟 Динамический ID с индексом шкафа (b)
           const itemId = `r0-b${b}-sh${s}-sl${i}`;
           const slotX = currentStartX + 2 + i * (slotWidth + gapX);
           const slotY = startY + 2 + s * (slotHeight + gapY);
@@ -182,6 +183,18 @@ export class Game extends Scene {
   }
 
   shutdown() {
+    offEvent("book-picked-up", this.handleBookPicked, this);
+    offEvent("book-hovered", this.handleBookPicked, this);
+    offEvent("shelf-clicked", this.handlePlacementAttempt, this);
+    offEvent("slot-clicked", this.handlePlacementAttempt, this);
+
+    this.handManager.clear();
+
+    this.shelves.forEach((s) => s.destroy());
+    this.slots.forEach((s) => s.destroy());
+    this.books.forEach((b) => b.destroy());
+
+    this.shelves = [];
     this.slots = [];
     this.books = [];
   }
