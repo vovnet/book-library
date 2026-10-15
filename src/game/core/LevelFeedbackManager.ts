@@ -5,6 +5,7 @@ export class LevelFeedbackManager {
   constructor(private scene: Scene) {}
 
   public async animateShelfCompletion(shelfSlots: Slot[]): Promise<void> {
+    this.subtleCameraFlash();
     const promises = shelfSlots.map((target, index) => {
       if (!target.book) return Promise.resolve();
       return new Promise<void>((resolve) => {
@@ -63,6 +64,41 @@ export class LevelFeedbackManager {
       ease: "Power2", // Плавное замедление
       onComplete: () => {
         floatingText.destroy(); // 🌟 КРИТИЧЕСКИ ВАЖНО: уничтожаем объект после анимации
+      },
+    });
+  }
+
+  /**
+   * Создает легкую белую вспышку на экране с контролируемой прозрачностью
+   * @param alpha Начальная прозрачность вспышки (от 0.1 до 1.0). Например, 0.25 = 25% белого.
+   * @param duration Длительность затухания в миллисекундах (например, 300)
+   */
+  private subtleCameraFlash(alpha: number = 0.25, duration: number = 300): void {
+    const width = this.scene.cameras.main.width;
+    const height = this.scene.cameras.main.height;
+
+    // 1. Создаем белый прямоугольник на весь экран
+    const flashOverlay = this.scene.add.rectangle(
+      width / 2,
+      height / 2,
+      width,
+      height,
+      0xffffff, // Белый цвет
+      alpha, // 🌟 Начальная прозрачность
+    );
+
+    // 2. Поднимаем на самый верх, чтобы перекрыть всё (книги, текст, шкафы)
+    flashOverlay.setDepth(9999);
+
+    // 3. Анимируем плавное исчезновение
+    this.scene.tweens.add({
+      targets: flashOverlay,
+      alpha: 0, // Конечная прозрачность
+      duration: duration,
+      ease: "Power2", // Плавное, естественное затухание
+      onComplete: () => {
+        // 🌟 КРИТИЧЕСКИ ВАЖНО: удаляем объект после анимации, чтобы не забивать память
+        flashOverlay.destroy();
       },
     });
   }
