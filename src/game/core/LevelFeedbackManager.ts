@@ -5,7 +5,6 @@ export class LevelFeedbackManager {
   constructor(private scene: Scene) {}
 
   public async animateShelfCompletion(shelfSlots: Slot[]): Promise<void> {
-    this.subtleCameraFlash();
     const promises = shelfSlots.map((target, index) => {
       if (!target.book) return Promise.resolve();
       return new Promise<void>((resolve) => {
@@ -19,6 +18,7 @@ export class LevelFeedbackManager {
   }
 
   public triggerBookcaseAnimation(b: number, bookcaseSlots: Slot[]) {
+    this.subtleCameraFlash();
     const shelfIndexes = [...new Set(bookcaseSlots.map((slot) => slot.shelfIndex))].sort(
       (a, b) => a - b,
     );
