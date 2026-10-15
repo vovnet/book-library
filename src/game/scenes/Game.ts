@@ -6,6 +6,7 @@ import { Book } from "../view/Book";
 import { HandManager } from "../core/HandManager";
 import { ClickPickupStrategy, HoverPickupStrategy } from "../core/HandStrategies";
 import { Shelf } from "../view/Shelf";
+import { LevelConfig } from "../core/types";
 
 export class Game extends Scene {
   private readonly CONFIG = {
@@ -19,6 +20,8 @@ export class Game extends Scene {
     startY: 80,
   };
 
+  private levelConfig: LevelConfig;
+
   private handManager: HandManager;
 
   private slots: Slot[] = [];
@@ -26,12 +29,20 @@ export class Game extends Scene {
 
   private shelves: Shelf[] = [];
 
-  constructor() {
+  constructor(config?: { levelConfig: LevelConfig }) {
     super("Game");
+
+    this.levelConfig = config?.levelConfig || {
+      pickupStrategy: new HoverPickupStrategy(5),
+      placementEventName: "shelf-clicked",
+      resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
+      // resolveTargets: (slot: Slot) => [slot],
+      highlightMode: "shelves",
+    };
   }
 
   create() {
-    this.handManager = new HandManager(this, new HoverPickupStrategy(5));
+    this.handManager = new HandManager(this, this.levelConfig.pickupStrategy);
     // 1. НАСТРОЙКИ ГЕНЕРАЦИИ
 
     const { shelvesCount, slotsPerShelf, slotWidth, slotHeight, gapX, gapY, startX, startY } =
@@ -88,19 +99,34 @@ export class Game extends Scene {
   }
 
   private setupInputListeners() {
-    if (this.handManager.getPickupMode() === "hover") {
-      onEvent("book-hovered", this.handleBookPicked, this);
-    } else {
-      onEvent("book-picked-up", this.handleBookPicked, this);
-    }
+    const mode = this.handManager.getPickupMode();
+    const pickupEvent = mode === "hover" ? "book-hovered" : "book-picked-up";
+    onEvent(pickupEvent, this.handleBookPicked, this);
 
-    onEvent("slot-clicked", this.handleSlotClicked, this);
-    onEvent("shelf-clicked", this.handleShelfClicked, this);
+    // 🌟 Подписка на размещение ТОЛЬКО для текущего режима уровня
+    onEvent(this.levelConfig.placementEventName, this.handlePlacementAttempt, this);
   }
 
-  private async handleShelfClicked(shelf: Shelf) {
-    const targetSlots = this.slots.filter((s) => shelf.containsId(s.id));
-    this.attemptPlaceBook(targetSlots);
+  private async handlePlacementAttempt(source: any) {
+    // 1. Спрашиваем у конфига, какие слоты целевые для этого источника
+    const targetSlots = this.levelConfig.resolveTargets(source);
+    if (!targetSlots || targetSlots.length === 0) return;
+
+    const booksInHand = this.handManager.getBooks();
+
+    // 2. Ищем книгу в руке, которая совпадает с одним из целевых слотов
+    const matchingBook = booksInHand.find((book) =>
+      targetSlots.some((slot) => slot.id === book.id),
+    );
+
+    if (!matchingBook) return; // Нет подходящей книги
+
+    // 3. Находим точный слот
+    const exactSlot = targetSlots.find((s) => s.id === matchingBook.id)!;
+    if (exactSlot.book) return; // Слот уже занят (защита)
+
+    // 4. Размещаем
+    await this.placeBookInSlot(matchingBook, exactSlot);
   }
 
   private async handleBookPicked(book: Book) {
@@ -108,23 +134,6 @@ export class Game extends Scene {
     if (books) {
       this.updateHighlights();
     }
-  }
-
-  private updateHighlightSlots() {
-    const books = this.handManager.getBooks();
-    this.slots.forEach((slot) => slot.setHighlight(false));
-    books.forEach((b) => {
-      this.slots.find((s) => s.id === b.id)?.setHighlight(true);
-    });
-  }
-
-  private updateHighlightShelves() {
-    const books = this.handManager.getBooks();
-    this.shelves.forEach((shelf) => shelf.setHighlight(false));
-
-    books.forEach((book) => {
-      this.shelves.find((shelf) => shelf.containsBook(book.id))?.setHighlight(true);
-    });
   }
 
   private async handleSlotClicked(slot: Slot) {
@@ -161,8 +170,23 @@ export class Game extends Scene {
   }
 
   private updateHighlights() {
-    this.updateHighlightSlots();
-    this.updateHighlightShelves();
+    const booksInHand = this.handManager.getBooks();
+    const mode = this.levelConfig.highlightMode;
+
+    // 1. Сначала сбрасываем ВСЁ, чтобы не было "залипаний"
+    this.slots.forEach((s) => s.setHighlight(false));
+    this.shelves.forEach((s) => s.setHighlight(false));
+
+    // 2. Включаем подсветку только для нужного режима
+    booksInHand.forEach((book) => {
+      if (mode === "slots") {
+        this.slots.find((s) => s.id === book.id)?.setHighlight(true);
+      }
+
+      if (mode === "shelves") {
+        this.shelves.find((s) => s.containsId(book.id))?.setHighlight(true);
+      }
+    });
   }
 
   shutdown() {
