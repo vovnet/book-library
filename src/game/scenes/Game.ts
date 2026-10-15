@@ -8,6 +8,7 @@ import { ClickPickupStrategy, HoverPickupStrategy } from "../core/HandStrategies
 import { Shelf } from "../view/Shelf";
 import { LevelConfig } from "../core/types";
 import { LevelFeedbackManager } from "../core/LevelFeedbackManager";
+import { Bookcase } from "../view/Bookcase";
 
 export class Game extends Scene {
   private readonly CONFIG = {
@@ -31,16 +32,18 @@ export class Game extends Scene {
   private books: Book[] = [];
 
   private shelves: Shelf[] = [];
+  private bookcases: Bookcase[] = [];
 
   constructor(config?: { levelConfig: LevelConfig }) {
     super("Game");
 
     this.levelConfig = config?.levelConfig || {
       pickupStrategy: new HoverPickupStrategy(35),
-      placementEventName: "shelf-clicked",
-      resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
+      placementEventName: "bookcase-clicked",
+      resolveTargets: (bc: Bookcase) => this.slots.filter((s) => bc.containsId(s.id)),
+      // resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
       // resolveTargets: (slot: Slot) => [slot],
-      highlightMode: "shelves",
+      highlightMode: "bookcases",
     };
   }
 
@@ -73,10 +76,14 @@ export class Game extends Scene {
     const totalShelvesHeight = shelvesCount * (slotHeight + gapY);
     const centerShelvesY = startY - 14 + totalShelvesHeight / 2;
 
+    const bookcaseVisualWidth = outlineWidth; // компенсация outlineX - 7
+    const bookcaseVisualHeight = totalShelvesHeight;
+
     // 2. ГЕНЕРАЦИЯ ШКАФОВ, ПОЛОК И СЛОТОВ
     for (let b = 0; b < bookcasesCount; b++) {
       const currentStartX = startX + b * (outlineWidth + bookcaseGapX);
       const outlineX = currentStartX - 7;
+      const outlineY = startY - 14;
 
       // 🌟 2.1 ДОБАВЛЯЕМ ИЗОБРАЖЕНИЕ ШКАФА "КАК ЕСТЬ"
       // Находим центр текущей зоны слотов по X
@@ -87,10 +94,15 @@ export class Game extends Scene {
       bookcaseBg.y -= 10;
       bookcaseBg.setScale(0.92).setDepth(0); // 🌟 Убираем на самый задний план
 
-      // 💡 СОВЕТ: Если твой арт имеет специфическую точку привязки (origin)
-      // и визуально немного смещен относительно слотов, подправь его здесь:
-      // bookcaseBg.x += 10; // Сдвинуть вправо на 10px
-      // bookcaseBg.y -= 5;  // Сдвинуть вверх на 5px
+      const bookcase = new Bookcase(
+        this,
+        outlineX,
+        outlineY,
+        bookcaseVisualWidth,
+        bookcaseVisualHeight,
+        b,
+      );
+      this.bookcases.push(bookcase);
 
       for (let s = 0; s < shelvesCount; s++) {
         const outlineY = startY - 14 + s * (slotHeight + gapY);
@@ -197,6 +209,7 @@ export class Game extends Scene {
     // 1. Сначала сбрасываем ВСЁ, чтобы не было "залипаний"
     this.slots.forEach((s) => s.setHighlight(false));
     this.shelves.forEach((s) => s.setHighlight(false));
+    this.bookcases.forEach((bc) => bc.setHighlight(false));
 
     // 2. Включаем подсветку только для нужного режима
     booksInHand.forEach((book) => {
@@ -206,6 +219,10 @@ export class Game extends Scene {
 
       if (mode === "shelves") {
         this.shelves.find((s) => s.containsId(book.id))?.setHighlight(true);
+      }
+
+      if (mode === "bookcases") {
+        this.bookcases.find((bc) => bc.containsId(book.id))?.setHighlight(true);
       }
     });
   }
@@ -252,13 +269,16 @@ export class Game extends Scene {
     offEvent("book-hovered", this.handleBookPicked, this);
     offEvent("shelf-clicked", this.handlePlacementAttempt, this);
     offEvent("slot-clicked", this.handlePlacementAttempt, this);
+    offEvent("bookcase-clicked", this.handlePlacementAttempt, this); // 🌟 ОТПИСКА
 
     this.handManager.clear();
 
+    this.bookcases.forEach((bc) => bc.destroy()); // 🌟 ОЧИСТКА
     this.shelves.forEach((s) => s.destroy());
     this.slots.forEach((s) => s.destroy());
     this.books.forEach((b) => b.destroy());
 
+    this.bookcases = [];
     this.shelves = [];
     this.slots = [];
     this.books = [];
