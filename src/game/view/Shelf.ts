@@ -28,7 +28,8 @@ export class Shelf {
     this.outline.setDepth(20); // Выше слотов (10), но ниже книг в руке (100+)
 
     const hitArea = new Geom.Rectangle(x, y, width, height);
-    this.outline.setInteractive(hitArea, Geom.Rectangle.Contains, true); // true = курсор-рука
+    this.outline.setInteractive(hitArea, Geom.Rectangle.Contains, true);
+    this.outline.disableInteractive();
 
     // 🌟 2. ОТПРАВЛЯЕМ СОБЫТИЕ ПРИ КЛИКЕ
     this.outline.on("pointerdown", () => {
@@ -39,6 +40,11 @@ export class Shelf {
   // 🌟 Включить или выключить подсветку
   public setHighlight(active: boolean): void {
     this.outline.setVisible(active);
+    if (active) {
+      this.outline.setInteractive();
+    } else {
+      this.outline.disableInteractive();
+    }
   }
 
   public containsId(id: string): boolean {

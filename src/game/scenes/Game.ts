@@ -137,26 +137,30 @@ export class Game extends Scene {
   }
 
   private async handlePlacementAttempt(source: any) {
-    // 1. Получаем целевые слоты (например, 9 слотов полки)
     const targetSlots = this.levelConfig.resolveTargets(source);
     if (!targetSlots || targetSlots.length === 0) return;
 
     const booksInHand = this.handManager.getBooks();
-
-    // 2. 🌟 Ищем ВСЕ книги в руке, которые подходят к этим слотам (filter вместо find)
     const matchingBooks = booksInHand.filter((book) =>
       targetSlots.some((slot) => slot.id === book.id),
     );
 
-    if (matchingBooks.length === 0) return; // Нет подходящих книг
+    if (matchingBooks.length === 0) return;
 
-    // 3. 🌟 Запускаем полет всех книг с эффектом "каскада" (волны)
+    // 🌟 1. МГНОВЕННОЕ ОБНОВЛЕНИЕ СОСТОЯНИЯ
+    // Удаляем книги из менеджера СРАЗУ, до начала любых анимаций
+    matchingBooks.forEach((book) => {
+      this.handManager.removeBook(book);
+    });
+
+    // 🌟 2. МГНОВЕННОЕ ОТКЛЮЧЕНИЕ ПОДСВЕТКИ (и кликабельности)
+    this.updateHighlights();
+
+    // 🌟 3. Запускаем визуальные анимации для книг, которые мы только что "забрали"
     const promises = matchingBooks.map((book, index) => {
       const exactSlot = targetSlots.find((s) => s.id === book.id)!;
-      if (exactSlot.book) return Promise.resolve(); // Слот уже занят, пропускаем
+      if (exactSlot.book) return Promise.resolve();
 
-      // Добавляем задержку перед стартом полета (50мс * индекс книги)
-      // Это создает красивый эффект, когда книги вылетают из руки одна за другой
       return new Promise<void>((resolve) => {
         this.time.delayedCall(index * 50, async () => {
           await this.placeBookInSlot(book, exactSlot);
@@ -165,7 +169,6 @@ export class Game extends Scene {
       });
     });
 
-    // Ждем завершения полета ВСЕХ книг
     await Promise.all(promises);
   }
 
@@ -180,14 +183,11 @@ export class Game extends Scene {
     book.stopLevitation();
     await book.flyTo(slot.x, slot.y);
 
-    this.handManager.removeBook(book);
+    // Книга уже удалена из руки в handlePlacementAttempt!
     slot.setBook(book);
 
     this.feedback.showFloatingText(slot.x, slot.y, "+1", "#feffc1");
-
     this.checkCompletions(slot);
-
-    this.updateHighlights();
   }
 
   private updateHighlights() {

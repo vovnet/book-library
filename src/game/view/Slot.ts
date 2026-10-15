@@ -34,6 +34,8 @@ export class Slot extends GameObjects.Container {
     this.add(this.highlightBorder);
 
     this.setInteractive(new Geom.Rectangle(-9, -16, 18, 32), Geom.Rectangle.Contains);
+    this.disableInteractive();
+
     this.on("pointerdown", () => emitEvent("slot-clicked", this));
   }
 
@@ -44,6 +46,7 @@ export class Slot extends GameObjects.Container {
   public setHighlight(active: boolean) {
     if (active && !this.highlightTween) {
       this.highlightBorder.setVisible(true);
+      this.setInteractive();
       this.highlightTween = this.scene.tweens.add({
         targets: this.highlightBorder,
         alpha: { from: 0.3, to: 1 },
@@ -53,6 +56,7 @@ export class Slot extends GameObjects.Container {
         ease: "Sine.easeInOut",
       });
     } else if (!active) {
+      this.disableInteractive();
       this.highlightBorder.setVisible(false);
       this.highlightTween?.stop();
       this.highlightTween = null;
