@@ -58,16 +58,19 @@ export class Book extends Phaser.GameObjects.Container {
     });
   }
 
-  public celebrate(liftHeight: number = 8, duration: number = 200): void {
-    const originalY = this.y;
+  public celebrate(liftHeight: number = 8, duration: number = 200) {
+    return new Promise((resolve) => {
+      const originalY = this.y;
 
-    this.scene.tweens.add({
-      targets: this,
-      y: originalY - liftHeight,
-      scale: 1.15, // 🌟 Чуть увеличиваем в момент подъема
-      duration: duration / 2,
-      yoyo: true,
-      ease: "Sine.easeInOut",
+      this.scene.tweens.add({
+        targets: this,
+        y: originalY - liftHeight,
+        scale: 1.15, // 🌟 Чуть увеличиваем в момент подъема
+        duration: duration / 2,
+        yoyo: true,
+        ease: "Sine.easeInOut",
+        onComplete: () => resolve(true),
+      });
     });
   }
 

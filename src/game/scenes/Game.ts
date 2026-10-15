@@ -197,37 +197,79 @@ export class Game extends Scene {
     });
   }
 
-  // 🌟 ОБНОВЛЕННЫЙ МЕТОД: Проверка заполненности + анимация волны
-  private checkCompletions(slot: Slot) {
+  private async animateShelfCompletion(shelfSlots: Slot[]): Promise<void> {
+    // Создаем массив промисов для каждой книги на полке
+    const promises = shelfSlots.map((target, index) => {
+      if (!target.book) return Promise.resolve();
+
+      return new Promise<void>((resolve) => {
+        this.time.delayedCall(index * 20, async () => {
+          await target.book!.celebrate(15, 150);
+          resolve();
+        });
+      });
+    });
+
+    await Promise.all(promises);
+  }
+
+  // 🌟 Утилита для паузы (чтобы не использовать setTimeout напрямую)
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => this.time.delayedCall(ms, resolve));
+  }
+
+  private async checkCompletions(slot: Slot) {
     const b = slot.bookcaseIndex;
     const s = slot.shelfIndex;
 
     // 1. Проверяем ПОЛКУ
     const shelfSlots = this.slots
       .filter((target) => target.bookcaseIndex === b && target.shelfIndex === s)
-      .sort((a, b) => a.id.localeCompare(b.id)); // 🌟 Сортируем по ID, чтобы волна шла слева направо
+      .sort((a, b) => a.id.localeCompare(b.id));
 
-    if (shelfSlots.every((target) => target.book !== null)) {
-      console.log(`✅ Полка ${s} в шкафу ${b} полностью заполнена!`);
+    const isShelfFull = shelfSlots.every((target) => target.book !== null);
 
-      // 🌟 ЗАПУСКАЕМ ЭФФЕКТ ВОЛНЫ
-      shelfSlots.forEach((target, index) => {
+    // 2. Проверяем ШКАФ
+    const bookcaseSlots = this.slots.filter((target) => target.bookcaseIndex === b);
+    const isBookcaseFull = bookcaseSlots.every((target) => target.book !== null);
+
+    if (isShelfFull) {
+      // 🌟 ЖДЕМ завершения анимации всей полки!
+      await this.animateShelfCompletion(shelfSlots);
+
+      // Если этот ход заполнил и весь шкаф, запускаем его анимацию ПОСЛЕ полки
+      if (isBookcaseFull) {
+        await this.delay(200); // Небольшая драматическая пауза между анимациями
+        this.triggerBookcaseAnimation(b, bookcaseSlots);
+      }
+    }
+    // Если шкаф заполнен, но текущая полка была заполнена ранее (не на этом ходу)
+    else if (isBookcaseFull) {
+      await this.delay(300);
+      this.triggerBookcaseAnimation(b, bookcaseSlots);
+    }
+  }
+
+  private triggerBookcaseAnimation(b: number, bookcaseSlots: Slot[]) {
+    const shelfIndexes = [...new Set(bookcaseSlots.map((slot) => slot.shelfIndex))].sort(
+      (a, b) => a - b,
+    );
+
+    shelfIndexes.forEach((shelfIdx) => {
+      const currentShelfSlots = bookcaseSlots
+        .filter((target) => target.shelfIndex === shelfIdx)
+        .sort((a, b) => a.id.localeCompare(b.id));
+
+      const shelfDelay = shelfIdx * 100;
+
+      currentShelfSlots.forEach((target, slotIndex) => {
         if (target.book) {
-          // Задержка 80мс между каждой книгой создает эффект бегущей волны
-          this.time.delayedCall(index * 60, () => {
-            target.book!.celebrate(12, 150);
+          this.time.delayedCall(shelfDelay + slotIndex * 50, () => {
+            target.book!.celebrate(15, 150);
           });
         }
       });
-    }
-
-    // 2. Проверяем ШКАФ (без изменений)
-    const bookcaseSlots = this.slots.filter((target) => target.bookcaseIndex === b);
-
-    if (bookcaseSlots.every((target) => target.book !== null)) {
-      console.log(`🏆 Шкаф ${b} полностью заполнен!`);
-      this.showFloatingText(slot.x, slot.y - 40, "Шкаф заполнен!", "#00ff00");
-    }
+    });
   }
 
   private showFloatingText(x: number, y: number, text: string, color: string = "#00ff00") {
