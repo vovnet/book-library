@@ -197,27 +197,35 @@ export class Game extends Scene {
     });
   }
 
+  // 🌟 ОБНОВЛЕННЫЙ МЕТОД: Проверка заполненности + анимация волны
   private checkCompletions(slot: Slot) {
     const b = slot.bookcaseIndex;
     const s = slot.shelfIndex;
 
     // 1. Проверяем ПОЛКУ
-    const shelfSlots = this.slots.filter(
-      (target) => target.bookcaseIndex === b && target.shelfIndex === s,
-    );
+    const shelfSlots = this.slots
+      .filter((target) => target.bookcaseIndex === b && target.shelfIndex === s)
+      .sort((a, b) => a.id.localeCompare(b.id)); // 🌟 Сортируем по ID, чтобы волна шла слева направо
 
     if (shelfSlots.every((target) => target.book !== null)) {
       console.log(`✅ Полка ${s} в шкафу ${b} полностью заполнена!`);
-      // Визуальный фидбек: золотой текст над полкой
-      this.showFloatingText(slot.x, slot.y - 20, "Полка готова!", "#ffd700");
+
+      // 🌟 ЗАПУСКАЕМ ЭФФЕКТ ВОЛНЫ
+      shelfSlots.forEach((target, index) => {
+        if (target.book) {
+          // Задержка 80мс между каждой книгой создает эффект бегущей волны
+          this.time.delayedCall(index * 60, () => {
+            target.book!.celebrate(12, 150);
+          });
+        }
+      });
     }
 
-    // 2. Проверяем ШКАФ
+    // 2. Проверяем ШКАФ (без изменений)
     const bookcaseSlots = this.slots.filter((target) => target.bookcaseIndex === b);
 
     if (bookcaseSlots.every((target) => target.book !== null)) {
       console.log(`🏆 Шкаф ${b} полностью заполнен!`);
-      // Визуальный фидбек: крупный зеленый текст
       this.showFloatingText(slot.x, slot.y - 40, "Шкаф заполнен!", "#00ff00");
     }
   }
