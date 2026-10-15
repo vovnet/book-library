@@ -34,7 +34,7 @@ export class Game extends Scene {
     super("Game");
 
     this.levelConfig = config?.levelConfig || {
-      pickupStrategy: new HoverPickupStrategy(15),
+      pickupStrategy: new HoverPickupStrategy(35),
       placementEventName: "shelf-clicked",
       resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
       // resolveTargets: (slot: Slot) => [slot],
@@ -124,25 +124,36 @@ export class Game extends Scene {
   }
 
   private async handlePlacementAttempt(source: any) {
-    // 1. Спрашиваем у конфига, какие слоты целевые для этого источника
+    // 1. Получаем целевые слоты (например, 9 слотов полки)
     const targetSlots = this.levelConfig.resolveTargets(source);
     if (!targetSlots || targetSlots.length === 0) return;
 
     const booksInHand = this.handManager.getBooks();
 
-    // 2. Ищем книгу в руке, которая совпадает с одним из целевых слотов
-    const matchingBook = booksInHand.find((book) =>
+    // 2. 🌟 Ищем ВСЕ книги в руке, которые подходят к этим слотам (filter вместо find)
+    const matchingBooks = booksInHand.filter((book) =>
       targetSlots.some((slot) => slot.id === book.id),
     );
 
-    if (!matchingBook) return; // Нет подходящей книги
+    if (matchingBooks.length === 0) return; // Нет подходящих книг
 
-    // 3. Находим точный слот
-    const exactSlot = targetSlots.find((s) => s.id === matchingBook.id)!;
-    if (exactSlot.book) return; // Слот уже занят (защита)
+    // 3. 🌟 Запускаем полет всех книг с эффектом "каскада" (волны)
+    const promises = matchingBooks.map((book, index) => {
+      const exactSlot = targetSlots.find((s) => s.id === book.id)!;
+      if (exactSlot.book) return Promise.resolve(); // Слот уже занят, пропускаем
 
-    // 4. Размещаем
-    await this.placeBookInSlot(matchingBook, exactSlot);
+      // Добавляем задержку перед стартом полета (50мс * индекс книги)
+      // Это создает красивый эффект, когда книги вылетают из руки одна за другой
+      return new Promise<void>((resolve) => {
+        this.time.delayedCall(index * 50, async () => {
+          await this.placeBookInSlot(book, exactSlot);
+          resolve();
+        });
+      });
+    });
+
+    // Ждем завершения полета ВСЕХ книг
+    await Promise.all(promises);
   }
 
   private async handleBookPicked(book: Book) {
