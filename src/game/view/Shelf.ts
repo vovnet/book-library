@@ -22,7 +22,7 @@ export class Shelf {
 
     // Создаем и настраиваем контур
     this.outline = scene.add.graphics();
-    this.outline.lineStyle(2, 0xffff00, 0.4);
+    this.outline.lineStyle(2, 0xffffff, 0.8);
     this.outline.strokeRect(x, y, width, height);
     this.outline.setVisible(false); // Скрыт по умолчанию
     this.outline.setDepth(20); // Выше слотов (10), но ниже книг в руке (100+)

@@ -25,8 +25,8 @@ export class Slot extends GameObjects.Container {
     this.bookcaseIndex = bookcaseIndex;
     this.shelfIndex = shelfIndex;
 
-    const bg = scene.add.rectangle(0, 0, 18, 32, 0x000000, 0.1);
-    this.add(bg);
+    // const bg = scene.add.rectangle(0, 0, 18, 32, 0x000000, 0.1);
+    // this.add(bg);
 
     this.highlightBorder = scene.add.rectangle(0, 0, 18, 32, 0x000000, 0);
     this.highlightBorder.setStrokeStyle(2, 0xffffff);

@@ -1,6 +1,21 @@
 import * as Phaser from "phaser";
 import { emitEvent } from "../core/EventBus";
 
+const BOOK_COLORS = [
+  0x8b4513, // Коричневый (SaddleBrown)
+  0xa52a2a, // Красно-коричневый
+  0x2f4f4f, // Темный аспидно-серый
+  0x556b2f, // Темный оливковый
+  0x800000, // Бордовый (Maroon)
+  0x00008b, // Темно-синий
+  0x4b0082, // Индиго
+  0x8b0000, // Темно-красный
+  0xd2691e, // Шоколадный
+  0x2e8b57, // Морская волна (SeaGreen)
+  0x483d8b, // Темный грифельно-синий
+  0xcd853f, // Перу (светло-коричневый)
+];
+
 export class Book extends Phaser.GameObjects.Container {
   public id: string;
   public location: "floor" | "hand" | "slot";
@@ -15,9 +30,16 @@ export class Book extends Phaser.GameObjects.Container {
     this.id = id;
     this.location = "floor";
 
+    const parts = id.split("-");
+    const bookcaseIndex = parseInt(parts[1].replace("b", ""), 10);
+
+    const colorIndex = bookcaseIndex % BOOK_COLORS.length;
+    const bookColor = BOOK_COLORS[colorIndex];
+
     // Визуал живет ВНУТРИ модели
-    this.visual = scene.add.rectangle(0, 0, 18, 32, 0x8b4513);
+    this.visual = scene.add.rectangle(0, 0, 18, 32, bookColor);
     // this.visual.setStrokeStyle(2, 0xffffff);
+    this.visual.setStrokeStyle(1, 0x000000, 0.3);
     this.add(this.visual);
 
     this.visual.setInteractive();
