@@ -3,12 +3,22 @@ import { Scene } from "phaser";
 import { onEvent, offEvent } from "../core/EventBus";
 import { Slot } from "../view/Slot";
 import { Book } from "../view/Book";
-import { Tooltip } from "../view/Tooltip";
 import { HandManager } from "../core/HandManager";
 import { ClickPickupStrategy, HoverPickupStrategy } from "../core/HandStrategies";
 import { Shelf } from "../view/Shelf";
 
 export class Game extends Scene {
+  private readonly CONFIG = {
+    shelvesCount: 6,
+    slotsPerShelf: 9,
+    slotWidth: 18,
+    slotHeight: 32,
+    gapX: 1,
+    gapY: 4,
+    startX: 120,
+    startY: 80,
+  };
+
   private handManager: HandManager;
 
   private slots: Slot[] = [];
@@ -16,25 +26,16 @@ export class Game extends Scene {
 
   private shelves: Shelf[] = [];
 
-  private tooltip: Tooltip;
-
   constructor() {
     super("Game");
   }
 
   create() {
-    this.tooltip = new Tooltip(this);
     this.handManager = new HandManager(this, new HoverPickupStrategy(5));
     // 1. НАСТРОЙКИ ГЕНЕРАЦИИ
-    const shelvesCount = 6;
-    const slotsPerShelf = 9;
-    const slotWidth = 18;
-    const slotHeight = 32;
-    const gapX = 1; // Расстояние между книгами на полке
-    const gapY = 4; // Расстояние между полками
 
-    const startX = 120; // Начальная позиция шкафа по X
-    const startY = 80; // Начальная позиция шкафа по Y
+    const { shelvesCount, slotsPerShelf, slotWidth, slotHeight, gapX, gapY, startX, startY } =
+      this.CONFIG;
 
     // Предварительный расчет размеров контура полки
     const padding = 0;
