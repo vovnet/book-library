@@ -7,6 +7,7 @@ import { HandManager } from "../core/HandManager";
 import { ClickPickupStrategy, HoverPickupStrategy } from "../core/HandStrategies";
 import { Shelf } from "../view/Shelf";
 import { LevelConfig } from "../core/types";
+import { LevelFeedbackManager } from "../core/LevelFeedbackManager";
 
 export class Game extends Scene {
   private readonly CONFIG = {
@@ -24,6 +25,7 @@ export class Game extends Scene {
   private levelConfig: LevelConfig;
 
   private handManager: HandManager;
+  private feedback: LevelFeedbackManager;
 
   private slots: Slot[] = [];
   private books: Book[] = [];
@@ -44,6 +46,7 @@ export class Game extends Scene {
 
   create() {
     this.handManager = new HandManager(this, this.levelConfig.pickupStrategy);
+    this.feedback = new LevelFeedbackManager(this);
     // 1. НАСТРОЙКИ ГЕНЕРАЦИИ
 
     const {
@@ -170,7 +173,7 @@ export class Game extends Scene {
     this.handManager.removeBook(book);
     slot.setBook(book);
 
-    this.showFloatingText(slot.x, slot.y, "+1", "#feffc1");
+    this.feedback.showFloatingText(slot.x, slot.y, "+1", "#feffc1");
 
     this.checkCompletions(slot);
 
@@ -197,22 +200,6 @@ export class Game extends Scene {
     });
   }
 
-  private async animateShelfCompletion(shelfSlots: Slot[]): Promise<void> {
-    // Создаем массив промисов для каждой книги на полке
-    const promises = shelfSlots.map((target, index) => {
-      if (!target.book) return Promise.resolve();
-
-      return new Promise<void>((resolve) => {
-        this.time.delayedCall(index * 20, async () => {
-          await target.book!.celebrate(15, 150);
-          resolve();
-        });
-      });
-    });
-
-    await Promise.all(promises);
-  }
-
   // 🌟 Утилита для паузы (чтобы не использовать setTimeout напрямую)
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => this.time.delayedCall(ms, resolve));
@@ -235,69 +222,19 @@ export class Game extends Scene {
 
     if (isShelfFull) {
       // 🌟 ЖДЕМ завершения анимации всей полки!
-      await this.animateShelfCompletion(shelfSlots);
+      await this.feedback.animateShelfCompletion(shelfSlots);
 
       // Если этот ход заполнил и весь шкаф, запускаем его анимацию ПОСЛЕ полки
       if (isBookcaseFull) {
         await this.delay(200); // Небольшая драматическая пауза между анимациями
-        this.triggerBookcaseAnimation(b, bookcaseSlots);
+        this.feedback.triggerBookcaseAnimation(b, bookcaseSlots);
       }
     }
     // Если шкаф заполнен, но текущая полка была заполнена ранее (не на этом ходу)
     else if (isBookcaseFull) {
       await this.delay(300);
-      this.triggerBookcaseAnimation(b, bookcaseSlots);
+      this.feedback.triggerBookcaseAnimation(b, bookcaseSlots);
     }
-  }
-
-  private triggerBookcaseAnimation(b: number, bookcaseSlots: Slot[]) {
-    const shelfIndexes = [...new Set(bookcaseSlots.map((slot) => slot.shelfIndex))].sort(
-      (a, b) => a - b,
-    );
-
-    shelfIndexes.forEach((shelfIdx) => {
-      const currentShelfSlots = bookcaseSlots
-        .filter((target) => target.shelfIndex === shelfIdx)
-        .sort((a, b) => a.id.localeCompare(b.id));
-
-      const shelfDelay = shelfIdx * 100;
-
-      currentShelfSlots.forEach((target, slotIndex) => {
-        if (target.book) {
-          this.time.delayedCall(shelfDelay + slotIndex * 50, () => {
-            target.book!.celebrate(15, 150);
-          });
-        }
-      });
-    });
-  }
-
-  private showFloatingText(x: number, y: number, text: string, color: string = "#00ff00") {
-    // Создаем текст чуть выше целевой точки
-    const floatingText = this.add
-      .text(x, y - 10, text, {
-        fontSize: "26px",
-        color: color,
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 3, // Обводка для читаемости на любом фоне
-      })
-      .setOrigin(0.5);
-
-    // Поднимаем текст над всеми элементами полки и книги
-    floatingText.setDepth(150);
-
-    // Анимируем: движение вверх и исчезновение
-    this.tweens.add({
-      targets: floatingText,
-      y: y - 40, // Конечная позиция Y (выше)
-      alpha: 0, // Полная прозрачность в конце
-      duration: 800, // Длительность анимации в мс
-      ease: "Power2", // Плавное замедление
-      onComplete: () => {
-        floatingText.destroy(); // 🌟 КРИТИЧЕСКИ ВАЖНО: уничтожаем объект после анимации
-      },
-    });
   }
 
   shutdown() {
