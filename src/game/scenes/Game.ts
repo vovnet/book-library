@@ -136,29 +136,6 @@ export class Game extends Scene {
     }
   }
 
-  private async handleSlotClicked(slot: Slot) {
-    this.attemptPlaceBook([slot]);
-  }
-
-  private async attemptPlaceBook(targetSlots: Slot[]) {
-    const booksInHand = this.handManager.getBooks();
-    // 1. Ищем книгу в руке, которая принадлежит ХОТЯ БЫ ОДНОМУ из целевых слотов
-    const matchingBook = booksInHand.find((book) =>
-      targetSlots.some((slot) => slot.id === book.id),
-    );
-    if (!matchingBook) {
-      return;
-    }
-    // 2. Находим точный слот для этой книги
-    const exactSlot = targetSlots.find((s) => s.id === matchingBook.id)!;
-    // 3. Проверка на занятость (на случай рассинхронизации)
-    if (exactSlot.book) {
-      return;
-    }
-    // 4. Размещаем
-    await this.placeBookInSlot(matchingBook, exactSlot);
-  }
-
   private async placeBookInSlot(book: Book, slot: Slot) {
     book.stopLevitation();
     await book.flyTo(slot.x, slot.y);
@@ -190,8 +167,6 @@ export class Game extends Scene {
   }
 
   shutdown() {
-    offEvent("book-picked-up", this.handleBookPicked, this);
-    offEvent("slot-clicked", this.handleSlotClicked, this);
     this.slots = [];
     this.books = [];
   }
