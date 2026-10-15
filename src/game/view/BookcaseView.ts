@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 import { Slot } from "../core/types";
-import { ShelfView } from "./ShelfView";
+import { ShelfView } from "./Shelf";
 import { SHELF_HEIGHT, SHELF_GAP, SHELF_PADDING_X } from "../core/libConfig";
 import { SLOT_WIDTH, SLOT_GAP } from "../core/libConfig";
 

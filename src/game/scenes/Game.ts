@@ -4,11 +4,17 @@ import { onEvent, offEvent } from "../core/EventBus";
 import { Slot } from "../view/Slot";
 import { Book } from "../view/Book";
 import { Tooltip } from "../view/Tooltip";
+import { HandManager } from "../core/HandManager";
+import { ClickPickupStrategy, HoverPickupStrategy } from "../core/HandStrategies";
+import { Shelf } from "../view/Shelf";
 
 export class Game extends Scene {
-  private hand: Book[] = [];
+  private handManager: HandManager;
+
   private slots: Slot[] = [];
   private books: Book[] = [];
+
+  private shelves: Shelf[] = [];
 
   private tooltip: Tooltip;
 
@@ -18,6 +24,7 @@ export class Game extends Scene {
 
   create() {
     this.tooltip = new Tooltip(this);
+    this.handManager = new HandManager(this, new HoverPickupStrategy(5));
     // 1. НАСТРОЙКИ ГЕНЕРАЦИИ
     const shelvesCount = 6;
     const slotsPerShelf = 9;
@@ -29,12 +36,20 @@ export class Game extends Scene {
     const startX = 120; // Начальная позиция шкафа по X
     const startY = 80; // Начальная позиция шкафа по Y
 
-    // 🌟 ЗДЕСЬ ПОТОМ ПОДСТАВИШЬ СПРАЙТ ШКАФА:
-    // const bookcaseSprite = this.add.image(startX + 80, startY + 100, 'bookcase_texture');
-    // bookcaseSprite.setDepth(1); // Чтобы был позади книг, но поверх фона сцены
+    // Предварительный расчет размеров контура полки
+    const padding = 0;
+    const outlineWidth = slotsPerShelf * slotWidth + (slotsPerShelf - 1) * gapX + padding * 2;
+    const outlineHeight = slotHeight + padding * 2;
 
     // 2. ГЕНЕРАЦИЯ СЛОТОВ И КНИГ
     for (let s = 0; s < shelvesCount; s++) {
+      // 1. Создаем объект полки
+      const outlineX = startX - 7;
+      const outlineY = startY - 14 + s * (slotHeight + gapY);
+
+      const shelf = new Shelf(this, outlineX, outlineY, outlineWidth, outlineHeight, s);
+      this.shelves.push(shelf);
+
       for (let i = 0; i < slotsPerShelf; i++) {
         // Формируем уникальный ID, который будет одинаковым у слота и книги
         const itemId = `r0-b0-sh${s}-sl${i}`;
@@ -57,8 +72,8 @@ export class Game extends Scene {
     // 3. РАЗБРАСЫВАЕМ КНИГИ ПО ПОЛУ
     this.books.forEach((book) => {
       // Случайная позиция в нижней части экрана (зона "пола")
-      const floorX = Phaser.Math.Between(50, 750);
-      const floorY = Phaser.Math.Between(500, 580);
+      const floorX = Phaser.Math.Between(50, 1200);
+      const floorY = Phaser.Math.Between(500, 640);
 
       book.setPosition(floorX, floorY);
       book.setRotation(Phaser.Math.DegToRad(Phaser.Math.Between(-45, 45))); // Случайный наклон
@@ -68,59 +83,87 @@ export class Game extends Scene {
       this.add.existing(book);
     });
 
-    // 4. ПОДПИСЫВАЕМСЯ НА СОБЫТИЯ
-    onEvent("book-picked-up", this.handleBookPickedUp, this);
+    this.setupInputListeners();
+  }
+
+  private setupInputListeners() {
+    if (this.handManager.getPickupMode() === "hover") {
+      onEvent("book-hovered", this.handleBookPicked, this);
+    } else {
+      onEvent("book-picked-up", this.handleBookPicked, this);
+    }
+
     onEvent("slot-clicked", this.handleSlotClicked, this);
+    onEvent("shelf-clicked", this.handleShelfClicked, this);
   }
 
-  // 🌟 ОБРАБОТКА ВЗЯТИЯ КНИГИ С ПОЛА
-  private handleBookPickedUp(book: Book) {
-    // Добавляем в руку
-    this.hand.push(book);
-
-    // Анимация полета в "зону руки" (центр экрана)
-    book.flyTo(this.cameras.main.centerX, this.cameras.main.centerY).then(() => {
-      book.setDepth(100); // Книга в руке всегда поверх всего
-    });
-  }
-
-  // 🌟 ОБРАБОТКА КЛИКА ПО СЛОТУ
-  private handleSlotClicked(slot: Slot) {
-    // Ищем в руке книгу, чей ID совпадает с ID слота
-    const matchingBook = this.hand.find((b) => b.id === slot.id);
+  private async handleShelfClicked(shelf: Shelf) {
+    const booksInHand = this.handManager.getBooks();
+    const matchingBook = booksInHand.find((b) => shelf.containsBook(b.id));
 
     if (!matchingBook) {
-      slot.setHighlight(true);
-      this.tooltip.show(slot.x, slot.y, "aaaaa");
       return;
     }
 
-    // 1. Анимируем полет книги в слот
-    matchingBook.flyTo(slot.x, slot.y).then(() => {
-      // 2. Выравниваем координаты и отключаем интерактивность
-      matchingBook.setPosition(slot.x, slot.y);
-      matchingBook.setRotation(0);
-      matchingBook.disableInteractive();
-      matchingBook.setDepth(10);
+    const targetSlot = this.slots.find((s) => s.id === matchingBook.id);
+    if (targetSlot) {
+      this.placeBookInSlot(matchingBook, targetSlot);
+    }
+  }
 
-      // 3. Обновляем визуал слота
-      slot.setBook(matchingBook);
+  private async handleBookPicked(book: Book) {
+    const books = await this.handManager.addBook(book);
+    if (books) {
+      this.updateHighlights();
+    }
+  }
 
-      // 4. Удаляем книгу из руки
-      this.hand = this.hand.filter((b) => b.id !== matchingBook.id);
-
-      // 5. Проверяем победу
-      if (this.hand.length === 0) {
-        console.log("🎉 ПОЗДРАВЛЯЮ! ВСЕ КНИГИ НА МЕСТАХ! 🎉");
-      }
+  private updateHighlightSlots() {
+    const books = this.handManager.getBooks();
+    this.slots.forEach((slot) => slot.setHighlight(false));
+    books.forEach((b) => {
+      this.slots.find((s) => s.id === b.id)?.setHighlight(true);
     });
   }
 
-  // 🌟 ОЧИСТКА ПРИ ПЕРЕЗАПУСКЕ СЦЕНЫ
+  private updateHighlightShelves() {
+    const books = this.handManager.getBooks();
+    this.shelves.forEach((shelf) => shelf.setHighlight(false));
+
+    books.forEach((book) => {
+      this.shelves.find((shelf) => shelf.containsBook(book.id))?.setHighlight(true);
+    });
+  }
+
+  private async handleSlotClicked(slot: Slot) {
+    const matchingBook = this.handManager.getBooks().find((b) => b.id === slot.id);
+
+    if (!matchingBook) {
+      this.tooltip.show(slot.x, slot.y, "Не та книга!", 2000);
+      return;
+    }
+
+    this.placeBookInSlot(matchingBook, slot);
+  }
+
+  private async placeBookInSlot(book: Book, slot: Slot) {
+    book.stopLevitation();
+    await book.flyTo(slot.x, slot.y);
+
+    this.handManager.removeBook(book);
+    slot.setBook(book);
+
+    this.updateHighlights();
+  }
+
+  private updateHighlights() {
+    this.updateHighlightSlots();
+    this.updateHighlightShelves();
+  }
+
   shutdown() {
-    offEvent("book-picked-up", this.handleBookPickedUp, this);
+    offEvent("book-picked-up", this.handleBookPicked, this);
     offEvent("slot-clicked", this.handleSlotClicked, this);
-    this.hand = [];
     this.slots = [];
     this.books = [];
   }
