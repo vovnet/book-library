@@ -11,7 +11,7 @@ import { LevelFeedbackManager } from "../core/LevelFeedbackManager";
 
 export class Game extends Scene {
   private readonly CONFIG = {
-    bookcasesCount: 3,
+    bookcasesCount: 5,
     bookcaseGapX: 76,
     shelvesCount: 6,
     slotsPerShelf: 9,
