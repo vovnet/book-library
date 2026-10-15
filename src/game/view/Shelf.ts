@@ -41,6 +41,15 @@ export class Shelf {
     return bookShelfIndex === this.index;
   }
 
+  public containsId(id: string): boolean {
+    const parts = id.split("-");
+    if (parts.length >= 3) {
+      const targetShelfIndex = parseInt(parts[2].replace("sh", ""), 10);
+      return targetShelfIndex === this.index;
+    }
+    return false;
+  }
+
   // 🌟 Очистка памяти при уничтожении
   public destroy(): void {
     this.outline.destroy();

@@ -98,17 +98,8 @@ export class Game extends Scene {
   }
 
   private async handleShelfClicked(shelf: Shelf) {
-    const booksInHand = this.handManager.getBooks();
-    const matchingBook = booksInHand.find((b) => shelf.containsBook(b.id));
-
-    if (!matchingBook) {
-      return;
-    }
-
-    const targetSlot = this.slots.find((s) => s.id === matchingBook.id);
-    if (targetSlot) {
-      this.placeBookInSlot(matchingBook, targetSlot);
-    }
+    const targetSlots = this.slots.filter((s) => shelf.containsId(s.id));
+    this.attemptPlaceBook(targetSlots);
   }
 
   private async handleBookPicked(book: Book) {
@@ -136,14 +127,26 @@ export class Game extends Scene {
   }
 
   private async handleSlotClicked(slot: Slot) {
-    const matchingBook = this.handManager.getBooks().find((b) => b.id === slot.id);
+    this.attemptPlaceBook([slot]);
+  }
 
+  private async attemptPlaceBook(targetSlots: Slot[]) {
+    const booksInHand = this.handManager.getBooks();
+    // 1. Ищем книгу в руке, которая принадлежит ХОТЯ БЫ ОДНОМУ из целевых слотов
+    const matchingBook = booksInHand.find((book) =>
+      targetSlots.some((slot) => slot.id === book.id),
+    );
     if (!matchingBook) {
-      this.tooltip.show(slot.x, slot.y, "Не та книга!", 2000);
       return;
     }
-
-    this.placeBookInSlot(matchingBook, slot);
+    // 2. Находим точный слот для этой книги
+    const exactSlot = targetSlots.find((s) => s.id === matchingBook.id)!;
+    // 3. Проверка на занятость (на случай рассинхронизации)
+    if (exactSlot.book) {
+      return;
+    }
+    // 4. Размещаем
+    await this.placeBookInSlot(matchingBook, exactSlot);
   }
 
   private async placeBookInSlot(book: Book, slot: Slot) {
