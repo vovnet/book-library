@@ -87,7 +87,7 @@ export class Game extends Scene {
           const slotX = currentStartX + 2 + i * (slotWidth + gapX);
           const slotY = startY + 2 + s * (slotHeight + gapY);
 
-          const slot = new Slot(this, slotX, slotY, itemId);
+          const slot = new Slot(this, slotX, slotY, itemId, b, s);
           this.add.existing(slot);
           this.slots.push(slot);
 
@@ -172,6 +172,8 @@ export class Game extends Scene {
 
     this.showFloatingText(slot.x, slot.y, "+1", "#feffc1");
 
+    this.checkCompletions(slot);
+
     this.updateHighlights();
   }
 
@@ -195,7 +197,31 @@ export class Game extends Scene {
     });
   }
 
-  // 🌟 НОВЫЙ МЕТОД: Показ всплывающего текста
+  private checkCompletions(slot: Slot) {
+    const b = slot.bookcaseIndex;
+    const s = slot.shelfIndex;
+
+    // 1. Проверяем ПОЛКУ
+    const shelfSlots = this.slots.filter(
+      (target) => target.bookcaseIndex === b && target.shelfIndex === s,
+    );
+
+    if (shelfSlots.every((target) => target.book !== null)) {
+      console.log(`✅ Полка ${s} в шкафу ${b} полностью заполнена!`);
+      // Визуальный фидбек: золотой текст над полкой
+      this.showFloatingText(slot.x, slot.y - 20, "Полка готова!", "#ffd700");
+    }
+
+    // 2. Проверяем ШКАФ
+    const bookcaseSlots = this.slots.filter((target) => target.bookcaseIndex === b);
+
+    if (bookcaseSlots.every((target) => target.book !== null)) {
+      console.log(`🏆 Шкаф ${b} полностью заполнен!`);
+      // Визуальный фидбек: крупный зеленый текст
+      this.showFloatingText(slot.x, slot.y - 40, "Шкаф заполнен!", "#00ff00");
+    }
+  }
+
   private showFloatingText(x: number, y: number, text: string, color: string = "#00ff00") {
     // Создаем текст чуть выше целевой точки
     const floatingText = this.add

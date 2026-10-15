@@ -6,12 +6,24 @@ export class Slot extends GameObjects.Container {
   public id: string;
   public book: Book | null = null;
 
+  public readonly bookcaseIndex: number;
+  public readonly shelfIndex: number;
+
   private highlightBorder: GameObjects.Rectangle;
   private highlightTween: Tweens.Tween | null = null;
 
-  constructor(scene: Scene, x: number, y: number, id: string) {
+  constructor(
+    scene: Scene,
+    x: number,
+    y: number,
+    id: string,
+    bookcaseIndex: number, // 🌟 Новый параметр
+    shelfIndex: number,
+  ) {
     super(scene, x, y);
     this.id = id;
+    this.bookcaseIndex = bookcaseIndex;
+    this.shelfIndex = shelfIndex;
 
     const bg = scene.add.rectangle(0, 0, 18, 32, 0x000000, 0.1);
     this.add(bg);
