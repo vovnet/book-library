@@ -28,6 +28,9 @@ export class ClickPickupStrategy implements HandLayoutStrategy {
   readonly name = "click";
   private maxCapacity: number;
 
+  private slotWidth: number = 15; // Расстояние между книгами
+  private startX: number = 0;
+
   constructor(maxCapacity: number = 1) {
     this.maxCapacity = maxCapacity;
   }
@@ -43,20 +46,16 @@ export class ClickPickupStrategy implements HandLayoutStrategy {
   // 🌟 Просто возвращаем данные
   calculatePositions(booksCount: number, centerX: number, centerY: number) {
     const positions: Array<{ x: number; y: number; rotation: number; scale: number }> = [];
-    if (booksCount === 0) return positions;
 
-    const radius = 80;
-    const arcAngle = Math.PI / 4;
-    const startAngle = Math.PI / 2 + arcAngle / 2;
+    // Центрируем весь ряд книг относительно центра экрана
+    const totalWidth = booksCount * this.slotWidth;
+    const startX = centerX - totalWidth / 2 + this.slotWidth / 2;
 
     for (let index = 0; index < booksCount; index++) {
-      const t = booksCount === 1 ? 0.5 : index / (booksCount - 1);
-      const angle = startAngle - arcAngle * t;
-
       positions.push({
-        x: centerX + Math.cos(angle) * radius,
-        y: centerY + Math.sin(angle) * radius * 0.3,
-        rotation: (t - 0.5) * 0.2,
+        x: startX + index * this.slotWidth,
+        y: centerY,
+        rotation: 0,
         scale: 1.0,
       });
     }
@@ -77,6 +76,9 @@ export class HoverPickupStrategy implements HandLayoutStrategy {
   readonly name = "hover";
   private maxCapacity: number;
 
+  private slotWidth: number = 15; // Расстояние между книгами
+  private startX: number = 0;
+
   constructor(maxCapacity: number = 10) {
     this.maxCapacity = maxCapacity;
   }
@@ -91,20 +93,16 @@ export class HoverPickupStrategy implements HandLayoutStrategy {
 
   calculatePositions(booksCount: number, centerX: number, centerY: number) {
     const positions: Array<{ x: number; y: number; rotation: number; scale: number }> = [];
-    if (booksCount === 0) return positions;
 
-    const radius = 120;
-    const arcAngle = Math.PI / 2.5;
-    const startAngle = Math.PI / 2 + arcAngle / 2;
+    // Центрируем весь ряд книг относительно центра экрана
+    const totalWidth = booksCount * this.slotWidth;
+    const startX = centerX - totalWidth / 2 + this.slotWidth / 2;
 
     for (let index = 0; index < booksCount; index++) {
-      const t = booksCount === 1 ? 0.5 : index / (booksCount - 1);
-      const angle = startAngle - arcAngle * t;
-
       positions.push({
-        x: centerX + Math.cos(angle) * radius,
-        y: centerY + Math.sin(angle) * radius * 0.35,
-        rotation: (t - 0.5) * 0.25,
+        x: startX + index * this.slotWidth,
+        y: centerY,
+        rotation: 0,
         scale: 1.0,
       });
     }

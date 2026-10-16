@@ -28,6 +28,8 @@ export class Book extends Phaser.GameObjects.Container {
   private levitationTween: Phaser.Tweens.Tween | null = null;
   private baseY: number = 0;
 
+  private slideTween: Phaser.Tweens.Tween | null = null;
+
   constructor(scene: Phaser.Scene, x: number, y: number, id: string) {
     super(scene, x, y);
     this.id = id;
@@ -117,10 +119,31 @@ export class Book extends Phaser.GameObjects.Container {
     });
   }
 
+  public slideTo(x: number, y: number, duration: number = 250): Promise<void> {
+    return new Promise((resolve) => {
+      // Останавливаем предыдущий slideTo, если он был
+      if (this.slideTween) {
+        this.slideTween.stop();
+      }
+
+      this.slideTween = this.scene.tweens.add({
+        targets: this,
+        x,
+        duration,
+        ease: "Power2",
+        onComplete: () => {
+          this.slideTween = null;
+          resolve();
+        },
+      });
+    });
+  }
+
   public stopLevitation() {
     if (this.levitationTween) {
       this.levitationTween.stop();
       this.levitationTween = null;
+      this.y = this.baseY;
     }
   }
 

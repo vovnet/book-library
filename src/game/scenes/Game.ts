@@ -38,12 +38,12 @@ export class Game extends Scene {
     super("Game");
 
     this.levelConfig = config?.levelConfig || {
-      pickupStrategy: new HoverPickupStrategy(35),
-      placementEventName: "bookcase-clicked",
-      resolveTargets: (bc: Bookcase) => this.slots.filter((s) => bc.containsId(s.id)),
-      // resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
+      pickupStrategy: new HoverPickupStrategy(30),
+      placementEventName: "shelf-clicked",
+      // resolveTargets: (bc: Bookcase) => this.slots.filter((s) => bc.containsId(s.id)),
+      resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
       // resolveTargets: (slot: Slot) => [slot],
-      highlightMode: "bookcases",
+      highlightMode: "shelves",
     };
   }
 

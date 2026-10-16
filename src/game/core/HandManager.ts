@@ -7,12 +7,17 @@ export class HandManager {
   private strategy: HandLayoutStrategy;
   private scene: Scene;
 
+  private handX: number;
+  private handY: number;
+
   constructor(scene: Scene, initialStrategy: HandLayoutStrategy) {
     this.scene = scene;
     this.strategy = initialStrategy;
+    this.handX = this.scene.cameras.main.centerX;
+    this.handY = this.scene.cameras.main.centerY + 60;
   }
 
-  public async addBook(book: Book) {
+  public async addBook(book: Book): Promise<Book[] | false> {
     const capacity = this.strategy.getMaxCapacity();
     if (capacity > 0 && this.books.length >= capacity) {
       return false;
@@ -20,25 +25,37 @@ export class HandManager {
 
     this.books.push(book);
     book.removePickupEvents();
-    const centerX = this.scene.cameras.main.centerX;
-    const centerY = this.scene.cameras.main.centerY;
 
-    await book.flyTo(centerX, centerY);
+    const positions = this.strategy.calculatePositions(this.books.length, this.handX, this.handY);
+    const pos = positions[positions.length - 1];
+
+    // 🌟 Новая книга летит из мира в руку через flyTo
+    await book.flyTo(pos?.x || this.handX, pos?.y || this.handY);
     book.startLevitation();
-    this.updateLayout();
+
+    // 🌟 Остальные книги плавно подстраиваются через slideTo
+    await this.updateLayout();
+
     return this.books;
   }
 
-  public async removeBook(book: Book) {
-    this.strategy.removeLevitation(book);
-    this.books = this.books.filter((b) => b !== book);
-    this.updateLayout();
-  }
+  public async removeBook(book: Book): Promise<void> {
+    const index = this.books.indexOf(book);
+    if (index === -1) return;
 
-  public setStrategy(newStrategy: HandLayoutStrategy) {
-    this.books.forEach((b) => this.strategy.removeLevitation(b));
-    this.strategy = newStrategy;
-    this.updateLayout();
+    // 1. Останавливаем левитацию и возвращаем мировые координаты,
+    // чтобы книга могла нормально улететь в слот на полке
+    this.strategy.removeLevitation(book);
+    book.setScrollFactor(1);
+
+    // 2. Удаляем книгу из массива
+    this.books.splice(index, 1);
+
+    // 3. 🌟 ЕДИНЫЙ ИСТОЧНИК ИСТИНЫ: пересчитываем всю оставшуюся руку,
+    // чтобы она красиво схлопнулась и осталась по центру
+    if (this.books.length > 0) {
+      await this.updateLayout();
+    }
   }
 
   public getBooks(): Book[] {
@@ -49,33 +66,36 @@ export class HandManager {
     return this.strategy.getPickupMode();
   }
 
-  public clear() {
+  public clear(): void {
     this.books.forEach((b) => this.strategy.removeLevitation(b));
     this.books = [];
   }
 
-  // 🌟 Менеджер применяет данные стратегии через flyTo
-  private updateLayout() {
-    console.log("update layout");
-    const centerX = this.scene.cameras.main.centerX;
-    const centerY = this.scene.cameras.main.centerY;
+  private async updateLayout(): Promise<void> {
+    const positions = this.strategy.calculatePositions(this.books.length, this.handX, this.handY);
+    const MOVE_THRESHOLD = 5; // Порог: если сдвиг меньше, не трогаем
 
-    // 1. Стратегия возвращает массив позиций
-    const positions = this.strategy.calculatePositions(this.books.length, centerX, centerY);
-
-    // 2. Менеджер применяет каждую позицию к соответствующей книге через flyTo
-    this.books.forEach((book, index) => {
+    const promises = this.books.map((book, index) => {
       const pos = positions[index];
-      if (!pos) return;
+      if (!pos) return Promise.resolve();
 
-      // todo
-      // this.scene.tweens.add({ targets: book });
+      const dx = Math.abs(book.x - pos.x);
+      const dy = Math.abs(book.y - pos.y);
+      const distance = Math.sqrt(dx * dx + dy * dy);
 
-      // book.flyTo(pos.x, pos.y, 300).then(() => {
-      //   book.setRotation(pos.rotation);
-      //   book.setScale(pos.scale);
-      //   this.strategy.applyLevitation(book);
-      // });
+      // Если сдвиг совсем маленький, пропускаем
+      if (distance < MOVE_THRESHOLD) {
+        return Promise.resolve();
+      }
+
+      // 🌟 Используем slideTo вместо flyTo для перемещения внутри руки
+      return book.slideTo(pos.x, pos.y, 250).then(() => {
+        book.setRotation(pos.rotation);
+        book.setScale(pos.scale);
+        // Левитация уже работает, не нужно её перезапускать
+      });
     });
+
+    await Promise.all(promises);
   }
 }
