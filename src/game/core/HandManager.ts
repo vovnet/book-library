@@ -29,6 +29,8 @@ export class HandManager {
     const positions = this.strategy.calculatePositions(this.books.length, this.handX, this.handY);
     const pos = positions[positions.length - 1];
 
+    book.setLocation("hand");
+
     // 🌟 Новая книга летит из мира в руку через flyTo
     await book.flyTo(pos?.x || this.handX, pos?.y || this.handY);
     book.startLevitation();

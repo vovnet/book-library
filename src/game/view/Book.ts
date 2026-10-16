@@ -1,68 +1,39 @@
 import * as Phaser from "phaser";
 import { emitEvent } from "../core/EventBus";
+import { BOOK_COLORS, BookState } from "../generators/BookTextereGenerator";
 
-const BOOK_COLORS = [
-  0x8b4513, // Коричневый (SaddleBrown)
-  0xa52a2a, // Красно-коричневый
-  0x2f4f4f, // Темный аспидно-серый
-  0x556b2f, // Темный оливковый
-  0x800000, // Бордовый (Maroon)
-  0xff7373, // Темно-синий
-  0x4b0082, // Индиго
-  0x8b0000, // Темно-красный
-  0xd2691e,
-  0x2e8b57,
-  0x483d8b,
-  0x006363,
-  0xcd853f,
-  0x009999,
-  0x992667,
-];
-
-export class Book extends Phaser.GameObjects.Container {
+export class Book extends Phaser.GameObjects.Sprite {
   public id: string;
   public location: "floor" | "hand" | "slot";
-
-  private visual: Phaser.GameObjects.Rectangle;
 
   private levitationTween: Phaser.Tweens.Tween | null = null;
   private baseY: number = 0;
 
   private slideTween: Phaser.Tweens.Tween | null = null;
+  private colorIndex: number;
 
   constructor(scene: Phaser.Scene, x: number, y: number, id: string) {
-    super(scene, x, y);
-    this.id = id;
-    this.location = "floor";
-
     const parts = id.split("-");
     const bookcaseIndex = parseInt(parts[1].replace("b", ""), 10);
 
     const colorIndex = bookcaseIndex % BOOK_COLORS.length;
-    const bookColor = BOOK_COLORS[colorIndex];
 
-    // Визуал живет ВНУТРИ модели
-    this.visual = scene.add.rectangle(0, 0, 18, 32, bookColor);
-    // this.visual.setStrokeStyle(2, 0xffffff);
-    this.visual.setStrokeStyle(1, 0x000000, 0.3);
-    this.add(this.visual);
+    super(scene, x, y, `book-floor-${colorIndex}`);
+    this.id = id;
+    this.location = "floor";
+    this.colorIndex = colorIndex;
 
-    this.visual.setInteractive();
-    this.visual.on("pointerdown", () => emitEvent("book-picked-up", this));
-    this.visual.on("pointerover", () => {
-      // this.visual.setStrokeStyle(1, 0xffff00, 1);
+    this.setInteractive();
+    this.on("pointerdown", () => emitEvent("book-picked-up", this));
+    this.on("pointerover", () => {
       emitEvent("book-hovered", this);
-    });
-
-    this.visual.on("pointerout", () => {
-      // this.visual.setStrokeStyle(2, 0xffffff, 0);
     });
   }
 
   public removePickupEvents() {
-    this.visual.off("pointerdown");
-    this.visual.off("pointerover");
-    this.visual.off("pointerout");
+    this.off("pointerdown");
+    this.off("pointerover");
+    this.off("pointerout");
   }
 
   // Модель сама знает, как себя показать
@@ -83,6 +54,12 @@ export class Book extends Phaser.GameObjects.Container {
         },
       });
     });
+  }
+
+  public setLocation(newLocation: "floor" | "hand" | "slot"): void {
+    this.location = newLocation;
+
+    this.setTexture(`book-${newLocation}-${this.colorIndex}`);
   }
 
   public celebrate(liftHeight: number = 8, duration: number = 200) {
@@ -145,9 +122,5 @@ export class Book extends Phaser.GameObjects.Container {
       this.levitationTween = null;
       this.y = this.baseY;
     }
-  }
-
-  public highlight(isVisible = true) {
-    this.visual.setStrokeStyle(3, 0xffff00, isVisible ? 1 : 0);
   }
 }

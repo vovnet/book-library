@@ -38,7 +38,7 @@ export class Game extends Scene {
     super("Game");
 
     this.levelConfig = config?.levelConfig || {
-      pickupStrategy: new HoverPickupStrategy(30),
+      pickupStrategy: new HoverPickupStrategy(20),
       placementEventName: "shelf-clicked",
       // resolveTargets: (bc: Bookcase) => this.slots.filter((s) => bc.containsId(s.id)),
       resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
@@ -193,7 +193,9 @@ export class Game extends Scene {
 
   private async placeBookInSlot(book: Book, slot: Slot) {
     book.stopLevitation();
+
     await book.flyTo(slot.x, slot.y);
+    book.setLocation("slot");
 
     // Книга уже удалена из руки в handlePlacementAttempt!
     slot.setBook(book);

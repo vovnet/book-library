@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { BookTextureGenerator } from "../generators/BookTextereGenerator";
 
 export class Preload extends Scene {
   constructor() {
@@ -70,6 +71,15 @@ export class Preload extends Scene {
 
     // Изображения
     this.load.image("bookcase", "case.png");
+    this.load.image("base_book", "base_book.png");
+
+    this.load.image("book-cover-floor", "cover-floor.png");
+    this.load.image("book-pages-floor", "pages-floor.png");
+
+    this.load.image("book-cover-hand", "cover-hand.png");
+    this.load.image("book-pages-hand", "pages-hand.png");
+
+    this.load.image("book-cover-slot", "cover-slot.png");
 
     // Звуки (раскомментируй, когда добавишь файлы)
     // this.load.audio("click", "sfx/click.mp3");
@@ -81,8 +91,9 @@ export class Preload extends Scene {
   }
 
   create() {
-    // Когда загрузка завершена, переходим к следующей сцене.
-    // Если у тебя есть сцена MainMenu, замени 'Game' на 'MainMenu'.
+    const generator = new BookTextureGenerator(this);
+    generator.bakeAll();
+
     this.scene.start("Game");
   }
 }
