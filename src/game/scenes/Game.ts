@@ -35,20 +35,34 @@ export class Game extends Scene {
   private shelves: Shelf[] = [];
   private bookcases: Bookcase[] = [];
 
-  constructor(config?: { levelConfig: LevelConfig }) {
+  constructor() {
     super("Game");
+  }
 
-    this.levelConfig = config?.levelConfig || {
-      pickupStrategy: new HoverPickupStrategy(40),
+  init(data: { levelConfig?: LevelConfig }) {
+    console.log("init game с данными:", data);
+
+    this.levelConfig = data.levelConfig || {
+      pickupStrategy: new HoverPickupStrategy(64),
       placementEventName: "bookcase-clicked",
       resolveTargets: (bc: Bookcase) => this.slots.filter((s) => bc.containsId(s.id)),
       // resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
       // resolveTargets: (slot: Slot) => [slot],
       highlightMode: "bookcases",
     };
+
+    // 🌟 ВАЖНО: Очищаем массивы перед новым запуском,
+    // так как shutdown мог не сработать, если мы делаем restart внутри сцены
+    this.slots = [];
+    this.books = [];
+    this.shelves = [];
+    this.bookcases = [];
+
+    this.events.once("shutdown", this.shutdown, this);
   }
 
   create() {
+    console.log("create game");
     this.handManager = new HandManager(this, this.levelConfig.pickupStrategy);
     this.feedback = new LevelFeedbackManager(this);
 
@@ -191,7 +205,7 @@ export class Game extends Scene {
     const isLevelCompleted = !this.books.some((b) => b.location !== "slot");
 
     if (isLevelCompleted) {
-      const overflow = new LevelCompleteOverlay(this, () => console.log("close"));
+      const overflow = new LevelCompleteOverlay(this, () => this.scene.start("LevelMap"));
       await this.delay(2000);
       overflow.show();
     }
@@ -280,11 +294,12 @@ export class Game extends Scene {
   }
 
   shutdown() {
+    console.log("shutdown");
     offEvent("book-picked-up", this.handleBookPicked, this);
     offEvent("book-hovered", this.handleBookPicked, this);
     offEvent("shelf-clicked", this.handlePlacementAttempt, this);
     offEvent("slot-clicked", this.handlePlacementAttempt, this);
-    offEvent("bookcase-clicked", this.handlePlacementAttempt, this); // 🌟 ОТПИСКА
+    offEvent("bookcase-clicked", this.handlePlacementAttempt, this);
 
     this.handManager.clear();
 

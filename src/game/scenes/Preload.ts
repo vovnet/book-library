@@ -72,6 +72,7 @@ export class Preload extends Scene {
     // Изображения
     this.load.image("bookcase", "case.png");
     this.load.image("base_book", "base_book.png");
+    this.load.image("map-texture", "map.png");
 
     this.load.image("book-cover-floor", "cover-floor.png");
     this.load.image("book-pages-floor", "pages-floor.png");
@@ -94,6 +95,6 @@ export class Preload extends Scene {
     const generator = new BookTextureGenerator(this);
     generator.bakeAll();
 
-    this.scene.start("Game");
+    this.scene.start("LevelMap");
   }
 }
