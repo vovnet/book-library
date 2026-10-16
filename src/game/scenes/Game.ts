@@ -9,6 +9,7 @@ import { Shelf } from "../view/Shelf";
 import { LevelConfig } from "../core/types";
 import { LevelFeedbackManager } from "../core/LevelFeedbackManager";
 import { Bookcase } from "../view/Bookcase";
+import { LevelCompleteOverlay } from "../view/LevelCompleteOverlay";
 
 export class Game extends Scene {
   private readonly CONFIG = {
@@ -38,12 +39,12 @@ export class Game extends Scene {
     super("Game");
 
     this.levelConfig = config?.levelConfig || {
-      pickupStrategy: new HoverPickupStrategy(20),
-      placementEventName: "shelf-clicked",
-      // resolveTargets: (bc: Bookcase) => this.slots.filter((s) => bc.containsId(s.id)),
-      resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
+      pickupStrategy: new HoverPickupStrategy(40),
+      placementEventName: "bookcase-clicked",
+      resolveTargets: (bc: Bookcase) => this.slots.filter((s) => bc.containsId(s.id)),
+      // resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
       // resolveTargets: (slot: Slot) => [slot],
-      highlightMode: "shelves",
+      highlightMode: "bookcases",
     };
   }
 
@@ -186,9 +187,14 @@ export class Game extends Scene {
     this.checkLevelCompletion();
   }
 
-  private checkLevelCompletion() {
+  private async checkLevelCompletion() {
     const isLevelCompleted = !this.books.some((b) => b.location !== "slot");
-    console.log({ isLevelCompleted });
+
+    if (isLevelCompleted) {
+      const overflow = new LevelCompleteOverlay(this, () => console.log("close"));
+      await this.delay(2000);
+      overflow.show();
+    }
   }
 
   private async handleBookPicked(book: Book) {
