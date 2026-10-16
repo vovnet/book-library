@@ -182,6 +182,13 @@ export class Game extends Scene {
     });
 
     await Promise.all(promises);
+
+    this.checkLevelCompletion();
+  }
+
+  private checkLevelCompletion() {
+    const isLevelCompleted = !this.books.some((b) => b.location !== "slot");
+    console.log({ isLevelCompleted });
   }
 
   private async handleBookPicked(book: Book) {
