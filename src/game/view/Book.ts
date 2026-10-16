@@ -12,22 +12,37 @@ export class Book extends Phaser.GameObjects.Sprite {
   private slideTween: Phaser.Tweens.Tween | null = null;
   private colorIndex: number;
 
+  private static shuffledIndices: number[] = [];
+
   constructor(scene: Phaser.Scene, x: number, y: number, id: string) {
     const parts = id.split("-");
     const bookcaseIndex = parseInt(parts[1].replace("b", ""), 10);
+    const shelfIndex = parseInt(parts[2].replace("sh", ""), 10);
 
-    const colorIndex = bookcaseIndex % BOOK_COLORS.length;
+    // 1. Вычисляем "паттерн" (детерминированный, чтобы полки и шкафы отличались)
+    const patternIndex = (bookcaseIndex * 5 + shelfIndex) % BOOK_COLORS.length;
 
-    super(scene, x, y, `book-floor-${colorIndex}`);
+    // 2. 🌟 Берем реальный индекс текстуры из перемешанного массива
+    const actualTextureIndex = Book.shuffledIndices[patternIndex];
+
+    super(scene, x, y, `book-floor-${actualTextureIndex}`);
+
     this.id = id;
     this.location = "floor";
-    this.colorIndex = colorIndex;
+    this.colorIndex = actualTextureIndex; // Сохраняем реальный индекс для смены локации
 
     this.setInteractive();
     this.on("pointerdown", () => emitEvent("book-picked-up", this));
-    this.on("pointerover", () => {
-      emitEvent("book-hovered", this);
-    });
+    this.on("pointerover", () => emitEvent("book-hovered", this));
+  }
+
+  public static generateRandomPalette(): void {
+    // Создаем массив [0, 1, 2, 3...] длиной как BOOK_COLORS
+    Book.shuffledIndices = Array.from({ length: BOOK_COLORS.length }, (_, i) => i);
+    // Перемешиваем его встроенным методом Phaser
+    Phaser.Utils.Array.Shuffle(Book.shuffledIndices);
+
+    console.log("🎨 Сгенерирована новая цветовая палитра уровня:", Book.shuffledIndices);
   }
 
   public removePickupEvents() {

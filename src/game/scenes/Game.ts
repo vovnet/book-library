@@ -41,6 +41,7 @@ export class Game extends Scene {
 
   init(data: { levelConfig?: LevelConfig }) {
     console.log("init game с данными:", data);
+    Book.generateRandomPalette();
 
     this.levelConfig = data.levelConfig || {
       pickupStrategy: new HoverPickupStrategy(64),
@@ -205,7 +206,7 @@ export class Game extends Scene {
     const isLevelCompleted = !this.books.some((b) => b.location !== "slot");
 
     if (isLevelCompleted) {
-      const overflow = new LevelCompleteOverlay(this, () => this.scene.start("LevelMap"));
+      const overflow = new LevelCompleteOverlay(this, () => this.scene.restart());
       await this.delay(2000);
       overflow.show();
     }
