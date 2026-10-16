@@ -92,7 +92,7 @@ export class Game extends Scene {
       const bookcaseBg = this.add.image(bookcaseCenterX, centerShelvesY, "bookcase");
       bookcaseBg.x -= 7;
       bookcaseBg.y -= 10;
-      bookcaseBg.setScale(0.92).setDepth(0); // 🌟 Убираем на самый задний план
+      bookcaseBg.setDepth(0); // 🌟 Убираем на самый задний план
 
       const bookcase = new Bookcase(
         this,
