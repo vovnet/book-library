@@ -1,4 +1,4 @@
-import { Scene } from "phaser";
+import { BlendModes, Scene } from "phaser";
 import { Slot } from "../view/Slot";
 
 export class LevelFeedbackManager {
@@ -68,37 +68,25 @@ export class LevelFeedbackManager {
     });
   }
 
-  /**
-   * Создает легкую белую вспышку на экране с контролируемой прозрачностью
-   * @param alpha Начальная прозрачность вспышки (от 0.1 до 1.0). Например, 0.25 = 25% белого.
-   * @param duration Длительность затухания в миллисекундах (например, 300)
-   */
-  private subtleCameraFlash(alpha: number = 0.25, duration: number = 300): void {
-    const width = this.scene.cameras.main.width;
-    const height = this.scene.cameras.main.height;
+  private subtleCameraFlash(strength: number = 0.2, duration: number = 400): void {
+    const camera = this.scene.cameras.main;
 
-    // 1. Создаем белый прямоугольник на весь экран
-    const flashOverlay = this.scene.add.rectangle(
-      width / 2,
-      height / 2,
-      width,
-      height,
-      0xffffff, // Белый цвет
-      alpha, // 🌟 Начальная прозрачность
+    const vignetteFilter = camera.filters.external.addVignette(
+      0.5, // x: центр по горизонтали (0.5 = 50% ширины камеры)
+      0.5, // y: центр по вертикали (0.5 = 50% высоты камеры)
+      2, // radius: размер "чистой" зоны в центре (0.0 - весь экран, 1.0 - только края)
+      strength, // strength: начальная сила/непрозрачность эффекта
+      0xffffff, // color: белый цвет для эффекта вспышки
+      BlendModes.SCREEN, // blendMode: критически важно для вспышек! SCREEN или ADD делают свет "светящимся"
     );
 
-    // 2. Поднимаем на самый верх, чтобы перекрыть всё (книги, текст, шкафы)
-    flashOverlay.setDepth(9999);
-
-    // 3. Анимируем плавное исчезновение
     this.scene.tweens.add({
-      targets: flashOverlay,
-      alpha: 0, // Конечная прозрачность
+      targets: vignetteFilter,
+      strength: 0,
       duration: duration,
-      ease: "Power2", // Плавное, естественное затухание
+      ease: "Power2",
       onComplete: () => {
-        // 🌟 КРИТИЧЕСКИ ВАЖНО: удаляем объект после анимации, чтобы не забивать память
-        flashOverlay.destroy();
+        camera.filters.external.remove(vignetteFilter);
       },
     });
   }
