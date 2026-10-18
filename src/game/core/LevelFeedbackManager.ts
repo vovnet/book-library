@@ -74,7 +74,7 @@ export class LevelFeedbackManager {
     const vignetteFilter = camera.filters.external.addVignette(
       0.5, // x: центр по горизонтали (0.5 = 50% ширины камеры)
       0.5, // y: центр по вертикали (0.5 = 50% высоты камеры)
-      2, // radius: размер "чистой" зоны в центре (0.0 - весь экран, 1.0 - только края)
+      0.9, // radius: размер "чистой" зоны в центре (0.0 - весь экран, 1.0 - только края)
       strength, // strength: начальная сила/непрозрачность эффекта
       0xffffff, // color: белый цвет для эффекта вспышки
       BlendModes.SCREEN, // blendMode: критически важно для вспышек! SCREEN или ADD делают свет "светящимся"
