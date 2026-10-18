@@ -44,7 +44,7 @@ export class Game extends Scene {
     Book.generateRandomPalette();
 
     this.levelConfig = data.levelConfig || {
-      pickupStrategy: new HoverPickupStrategy(64),
+      pickupStrategy: new HoverPickupStrategy(60),
       placementEventName: "bookcase-clicked",
       resolveTargets: (bc: Bookcase) => this.slots.filter((s) => bc.containsId(s.id)),
       // resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
@@ -52,8 +52,6 @@ export class Game extends Scene {
       highlightMode: "bookcases",
     };
 
-    // 🌟 ВАЖНО: Очищаем массивы перед новым запуском,
-    // так как shutdown мог не сработать, если мы делаем restart внутри сцены
     this.slots = [];
     this.books = [];
     this.shelves = [];
@@ -117,6 +115,7 @@ export class Game extends Scene {
         bookcaseVisualWidth,
         bookcaseVisualHeight,
         b,
+        bookcaseBg,
       );
       this.bookcases.push(bookcase);
 
@@ -257,6 +256,14 @@ export class Game extends Scene {
     });
   }
 
+  private triggerBookcaseShine(bookcaseIndex: number): void {
+    const bookcase = this.bookcases.find((bc) => bc.bookcaseIndex === bookcaseIndex);
+
+    if (bookcase) {
+      bookcase.shine();
+    }
+  }
+
   // 🌟 Утилита для паузы (чтобы не использовать setTimeout напрямую)
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => this.time.delayedCall(ms, resolve));
@@ -283,14 +290,10 @@ export class Game extends Scene {
 
       // Если этот ход заполнил и весь шкаф, запускаем его анимацию ПОСЛЕ полки
       if (isBookcaseFull) {
-        await this.delay(200); // Небольшая драматическая пауза между анимациями
+        await this.delay(200);
         this.feedback.triggerBookcaseAnimation(b, bookcaseSlots);
+        this.triggerBookcaseShine(b);
       }
-    }
-    // Если шкаф заполнен, но текущая полка была заполнена ранее (не на этом ходу)
-    else if (isBookcaseFull) {
-      await this.delay(300);
-      this.feedback.triggerBookcaseAnimation(b, bookcaseSlots);
     }
   }
 

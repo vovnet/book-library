@@ -1,10 +1,11 @@
-import { Scene, GameObjects, Geom } from "phaser";
+import { Scene, GameObjects, Geom, Actions } from "phaser";
 import { emitEvent } from "../core/EventBus";
 
 export class Bookcase {
   public readonly bookcaseIndex: number;
   private outline: GameObjects.Graphics;
   private scene: Scene;
+  private background: GameObjects.Image;
 
   constructor(
     scene: Scene,
@@ -13,9 +14,11 @@ export class Bookcase {
     width: number,
     height: number,
     bookcaseIndex: number,
+    background: GameObjects.Image,
   ) {
     this.scene = scene;
     this.bookcaseIndex = bookcaseIndex;
+    this.background = background;
 
     // Контур будет рисоваться вокруг всего шкафа
     this.outline = scene.add.graphics();
@@ -53,6 +56,27 @@ export class Bookcase {
       return targetBookcaseIndex === this.bookcaseIndex;
     }
     return false;
+  }
+
+  public shine(): void {
+    const duration = 1500;
+    Actions.AddEffectShine([this.background], {
+      duration, // Длительность анимации в мс
+      radius: 0.35, // Ширина полосы блика (как доля от размера цели, 0.35 = 35%)
+      direction: 0.75, // Направление: 0 = вправо, 0.5 = вниз, 0.75 = по диагонали (сверху-слева вниз-вправо)
+      scale: 2.5, // Длина пути блика относительно размера цели (с запасом, чтобы пролетел насквозь)
+      colorFactor: [1.8, 1.8, 1.8, 1], // Множитель яркости (R, G, B, A). Значения > 1 дают эффект реального свечения
+      ease: "Power2", // Плавный разгон и торможение
+      yoyo: false, // false = пролетает один раз и исчезает (не дергается туда-сюда)
+      useExternal: false, // false = эффект привязан к самому объекту, а не к экрану
+    });
+
+    this.scene.time.delayedCall(duration, () => {
+      if (this.background.filters && this.background.filters.internal) {
+        // Очищаем все внутренние фильтры (включая Shine)
+        this.background.filters.internal.clear();
+      }
+    });
   }
 
   public destroy(): void {
