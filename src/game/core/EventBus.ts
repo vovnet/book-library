@@ -17,6 +17,8 @@ export interface GameEvents {
   "book-hovered": (book: Book) => void;
   "shelf-clicked": (shelf: Shelf) => void;
   "bookcase-clicked": (shelf: Bookcase) => void;
+  "level-changed": (level: number) => void;
+  "game-state-data-changed": () => void;
 }
 
 // Типобезопасная обертка (чтобы не опечататься в названиях событий)

@@ -95,6 +95,6 @@ export class Preload extends Scene {
     const generator = new BookTextureGenerator(this);
     generator.bakeAll();
 
-    this.scene.start("LevelMap");
+    this.scene.start("MainScene");
   }
 }
