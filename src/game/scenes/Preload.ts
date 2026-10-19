@@ -1,12 +1,13 @@
 import { Scene } from "phaser";
 import { BookTextureGenerator } from "../generators/BookTextereGenerator";
+import { globalGame } from "../global/GlobalGame";
 
 export class Preload extends Scene {
   constructor() {
     super({ key: "Preload" });
   }
 
-  preload() {
+  async preload() {
     // 1. Устанавливаем базовую папку для всех загружаемых файлов
     // Убедись, что папка 'assets' существует в корне твоего проекта (рядом с index.html)
     this.load.setPath("assets/");
@@ -81,6 +82,8 @@ export class Preload extends Scene {
     this.load.image("book-pages-hand", "pages-hand.png");
 
     this.load.image("book-cover-slot", "cover-slot.png");
+
+    await globalGame.init();
 
     // Звуки (раскомментируй, когда добавишь файлы)
     // this.load.audio("click", "sfx/click.mp3");

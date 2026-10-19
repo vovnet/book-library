@@ -2,9 +2,11 @@ import * as Phaser from "phaser";
 import { Scene } from "phaser";
 import { BASE_POSITIONS, SEGMENT_WIDTH, VISIBLE_AHEAD, VISIBLE_BEHIND } from "../core/MapConfig";
 import { LibraryBuilding } from "../view/LibraryBuilding";
+import { GameState } from "../core/GameState";
+import { globalGame } from "../global/GlobalGame";
 
 export class LevelMapScene extends Scene {
-  private currentLevel: number = 5;
+  private gameState: GameState;
   private buildings: LibraryBuilding[] = [];
   private selectedBuilding: LibraryBuilding | null = null;
   private uiPanel: Phaser.GameObjects.Container | null = null;
@@ -13,12 +15,17 @@ export class LevelMapScene extends Scene {
     super({ key: "LevelMap" });
   }
 
-  create() {
+  create() {}
+
+  init() {
+    this.gameState = globalGame.gameState;
+    console.log("init: ", this.gameState.level, this.registry.list);
+
     const screenWidth = this.scale.width;
     const screenHeight = this.scale.height;
 
-    const minLevel = Math.max(1, this.currentLevel - VISIBLE_BEHIND);
-    const maxLevel = this.currentLevel + VISIBLE_AHEAD;
+    const minLevel = Math.max(1, this.gameState.level - VISIBLE_BEHIND);
+    const maxLevel = this.gameState.level + VISIBLE_AHEAD;
 
     const lastBuildingPos = this.getWorldPosition(maxLevel);
     const worldWidth = lastBuildingPos.x + screenWidth;
@@ -41,8 +48,8 @@ export class LevelMapScene extends Scene {
         worldPos.x,
         worldPos.y,
         level,
-        level <= this.currentLevel,
-        level === this.currentLevel,
+        level <= this.gameState.level,
+        level === this.gameState.level,
       );
       this.buildings.push(building);
     }
@@ -50,7 +57,7 @@ export class LevelMapScene extends Scene {
     this.events.on("building-selected", this.handleBuildingSelection, this);
 
     // При старте просто центрируем камеру, панель НЕ показываем
-    const currentBuilding = this.buildings.find((b) => b.levelId === this.currentLevel);
+    const currentBuilding = this.buildings.find((b) => b.levelId === this.gameState.level);
     if (currentBuilding) {
       this.centerCameraOnBuilding(currentBuilding, false);
     }
@@ -150,7 +157,7 @@ export class LevelMapScene extends Scene {
   }
 
   public advanceToNextLevel() {
-    this.currentLevel++;
+    this.gameState.level++;
     this.scene.restart();
   }
 

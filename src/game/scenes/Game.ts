@@ -10,6 +10,8 @@ import { LevelConfig } from "../core/types";
 import { LevelFeedbackManager } from "../core/LevelFeedbackManager";
 import { Bookcase } from "../view/Bookcase";
 import { LevelCompleteOverlay } from "../view/LevelCompleteOverlay";
+import { GameState } from "../core/GameState";
+import { globalGame } from "../global/GlobalGame";
 
 export class Game extends Scene {
   private readonly CONFIG = {
@@ -205,7 +207,13 @@ export class Game extends Scene {
     const isLevelCompleted = !this.books.some((b) => b.location !== "slot");
 
     if (isLevelCompleted) {
-      const overflow = new LevelCompleteOverlay(this, () => this.scene.restart());
+      const overflow = new LevelCompleteOverlay(this, () => {
+        const { gameState, saveManager } = globalGame;
+        gameState.level++;
+        console.log("close: ", gameState.level);
+        saveManager.save();
+        this.scene.start("MainScene");
+      });
       await this.delay(2000);
       overflow.show();
     }
