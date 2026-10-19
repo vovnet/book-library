@@ -1,17 +1,16 @@
-import { ClickPickupStrategy, HoverPickupStrategy } from "./HandStrategies";
 import { LevelConfigFactory } from "./LevelConfigFactory";
 import { LevelConfig } from "./types";
 
 export class LevelConfigBuilder {
   private config: Partial<LevelConfig> = {};
 
-  public withClickPickup(maxBooks: number): this {
-    this.config.pickupStrategy = new ClickPickupStrategy(maxBooks);
+  public withClickPickup(): this {
+    this.config.pickupStrategy = "byClick";
     return this;
   }
 
-  public withHoverPickup(maxBooks: number): this {
-    this.config.pickupStrategy = new HoverPickupStrategy(maxBooks);
+  public withHoverPickup(): this {
+    this.config.pickupStrategy = "byHover";
     return this;
   }
 
@@ -30,6 +29,11 @@ export class LevelConfigBuilder {
   public withBookcaseHighlight(): this {
     this.config.highlightMode = "bookcases";
     this.config.placementEventName = "bookcase-clicked";
+    return this;
+  }
+
+  public withMaxBooks(maxBooks: number): this {
+    this.config.maxBooks = maxBooks;
     return this;
   }
 

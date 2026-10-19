@@ -4,7 +4,11 @@ import { onEvent, offEvent } from "../core/EventBus";
 import { Slot } from "../view/Slot";
 import { Book } from "../view/Book";
 import { HandManager } from "../core/HandManager";
-import { ClickPickupStrategy, HoverPickupStrategy } from "../core/HandStrategies";
+import {
+  ClickPickupStrategy,
+  HandLayoutStrategy,
+  HoverPickupStrategy,
+} from "../core/HandStrategies";
 import { Shelf } from "../view/Shelf";
 import { LevelConfig } from "../core/types";
 import { LevelFeedbackManager } from "../core/LevelFeedbackManager";
@@ -37,6 +41,8 @@ export class Game extends Scene {
   private shelves: Shelf[] = [];
   private bookcases: Bookcase[] = [];
 
+  private pickupStrategy: HandLayoutStrategy;
+
   constructor() {
     super("Game");
   }
@@ -46,10 +52,16 @@ export class Game extends Scene {
     Book.generateRandomPalette();
 
     this.levelConfig = data.levelConfig || {
-      pickupStrategy: new HoverPickupStrategy(60),
+      pickupStrategy: "byClick",
       placementEventName: "bookcase-clicked",
       highlightMode: "bookcases",
+      maxBooks: 1,
     };
+
+    this.pickupStrategy =
+      this.levelConfig.pickupStrategy === "byClick"
+        ? new ClickPickupStrategy(this.levelConfig.maxBooks)
+        : new HoverPickupStrategy(this.levelConfig.maxBooks);
 
     this.levelConfig.resolveTargets = (source: any) => {
       if (this.levelConfig.highlightMode === "slots") {
@@ -74,7 +86,7 @@ export class Game extends Scene {
 
   create() {
     console.log("create game");
-    this.handManager = new HandManager(this, this.levelConfig.pickupStrategy);
+    this.handManager = new HandManager(this, this.pickupStrategy);
     this.feedback = new LevelFeedbackManager(this);
 
     const {

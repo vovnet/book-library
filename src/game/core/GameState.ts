@@ -1,15 +1,18 @@
 import { Utils } from "phaser";
 import { emitEvent } from "./EventBus";
+import { BoosterId } from "../registers/boosters";
 
 export interface GameStateData {
   level: number;
-  boosters: Record<string, number>;
+  handSize: number;
+  boosters: Record<BoosterId, number>;
   resources: Record<string, number>;
 }
 
 const defaultState: GameStateData = {
   level: 1,
-  boosters: { hand: 5, magnito: 5, intuition: 5, hardIntuition: 5 },
+  handSize: 1,
+  boosters: { hand: 5, magnetto: 5, intuition: 5, hardIntuition: 5 },
   resources: { zalupa: 34 },
 };
 
@@ -28,6 +31,15 @@ export class GameState {
 
   get resources() {
     return this.data.resources;
+  }
+
+  get handSize() {
+    return this.data.handSize;
+  }
+
+  public addHandSize(value: number) {
+    this.data.handSize += value;
+    this.emitDataChanged();
   }
 
   set level(val: number) {
@@ -51,6 +63,23 @@ export class GameState {
 
   setResource(name: string, value: number) {
     this.data.resources[name] = value;
+    this.emitDataChanged();
+  }
+
+  public getBoosterCount(id: BoosterId): number {
+    return this.data.boosters[id] ?? 0;
+  }
+
+  public useBooster(id: BoosterId): boolean {
+    if (this.getBoosterCount(id) <= 0) return false;
+    this.data.boosters[id]--;
+    this.emitDataChanged;
+    return true;
+  }
+
+  public addBooster(id: BoosterId, amount: number = 1): void {
+    if (!this.data.boosters[id]) this.data.boosters[id] = 0;
+    this.data.boosters[id] += amount;
     this.emitDataChanged();
   }
 

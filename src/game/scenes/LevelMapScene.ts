@@ -5,12 +5,14 @@ import { LibraryBuilding } from "../view/LibraryBuilding";
 import { GameState } from "../core/GameState";
 import { globalGame } from "../global/GlobalGame";
 import { LevelConfigBuilder } from "../core/LevelConfigBuilder";
+import { BoosterId } from "../registers/boosters";
+import { StartLevelModal } from "../view/StartLevelModal";
+import { UIScene } from "./UIScene";
 
 export class LevelMapScene extends Scene {
   private gameState: GameState;
   private buildings: LibraryBuilding[] = [];
   private selectedBuilding: LibraryBuilding | null = null;
-  private uiPanel: Phaser.GameObjects.Container | null = null;
 
   constructor() {
     super({ key: "LevelMap" });
@@ -75,18 +77,18 @@ export class LevelMapScene extends Scene {
   private handleBuildingSelection(building: LibraryBuilding) {
     if (!building.isCurrent) return;
 
-    if (this.selectedBuilding === building && this.uiPanel) return;
+    if (this.selectedBuilding === building) return;
 
     this.selectedBuilding = building;
 
-    if (this.uiPanel) {
-      this.uiPanel.destroy();
-      this.uiPanel = null;
-    }
-
-    this.showUIPanel(building);
-
     this.centerCameraOnBuilding(building, true);
+
+    const uiScene = this.scene.get("UIScene") as UIScene;
+    new StartLevelModal(
+      uiScene,
+      (selections) => this.confirmStartLevel(building, selections),
+      () => console.log("cancel"),
+    );
   }
 
   private centerCameraOnBuilding(building: LibraryBuilding, animate: boolean) {
@@ -106,61 +108,45 @@ export class LevelMapScene extends Scene {
     }
   }
 
-  // 🌟 ПРОСТОЕ СОЗДАНИЕ ПАНЕЛИ
-  private showUIPanel(building: LibraryBuilding) {
-    // Дополнительная страховка от двойного вызова
-    if (this.uiPanel) this.uiPanel.destroy();
-
-    const w = this.scale.width;
-    const h = this.scale.height;
-
-    this.uiPanel = this.add.container(w / 2, h);
-    this.uiPanel.setScrollFactor(0);
-    this.uiPanel.setDepth(100);
-
-    const bg = this.add.graphics();
-    bg.fillStyle(0x222222, 0.95);
-    bg.fillRoundedRect(-180, -60, 360, 120, 20);
-    bg.lineStyle(3, 0xffd700, 1);
-    bg.strokeRoundedRect(-180, -60, 360, 120, 20);
-
-    const title = this.add
-      .text(0, -30, `Библиотека №${building.levelId}`, {
-        fontFamily: "Arial",
-        fontSize: "24px",
-        color: "#ffd700",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5);
-
-    const subtitle = this.add
-      .text(0, 5, "Нажмите, чтобы начать", {
-        fontFamily: "Arial",
-        fontSize: "16px",
-        color: "#ffffff",
-      })
-      .setOrigin(0.5);
-
-    this.uiPanel.add([bg, title, subtitle]);
-
-    this.tweens.add({ targets: this.uiPanel, y: h - 80, duration: 300, ease: "Back.out" });
-
-    this.uiPanel.setInteractive(
-      new Phaser.Geom.Rectangle(-180, -60, 360, 120),
-      Phaser.Geom.Rectangle.Contains,
-    );
-
-    this.uiPanel.once("pointerdown", () => {
-      console.log(`🚀 Запуск уровня ${building.levelId}`);
-      this.scene.start("Game", {
-        levelConfig: new LevelConfigBuilder().withClickPickup(10).withBookcaseHighlight().build(),
-      });
-    });
-  }
-
   public advanceToNextLevel() {
     this.gameState.level++;
     this.scene.restart();
+  }
+
+  private confirmStartLevel(building: LibraryBuilding, selections: Record<BoosterId, boolean>) {
+    const builder = new LevelConfigBuilder();
+    builder.withSlotHighlight();
+    builder.withClickPickup();
+
+    const activeBoosters = Object.keys(selections).filter((key) => selections[key]) as BoosterId[];
+    console.log({ activeBoosters });
+    activeBoosters.forEach((boosterId) => {
+      this.gameState.useBooster(boosterId);
+
+      switch (boosterId) {
+        case "hand":
+          const baseHandSize = Math.max(this.gameState.handSize, 5);
+          console.log({ baseHandSize });
+          builder.withMaxBooks(baseHandSize * 2);
+          break;
+        case "magnetto":
+          builder.withHoverPickup();
+          break;
+        case "intuition":
+          builder.withShelfHighlight();
+          break;
+        case "hardIntuition":
+          builder.withBookcaseHighlight();
+          break;
+      }
+    });
+
+    const finalLevelConfig = builder.build();
+
+    this.scene.start("Game", {
+      levelConfig: finalLevelConfig,
+      levelNumber: building.levelId,
+    });
   }
 
   shutdown() {

@@ -5,9 +5,10 @@ export class Main extends Scene {
     super({ key: "MainScene" });
   }
 
-  async preload() {}
+  preload() {}
 
-  async create() {
+  create() {
     this.scene.launch("LevelMap");
+    this.scene.launch("UIScene");
   }
 }
