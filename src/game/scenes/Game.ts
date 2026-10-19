@@ -48,10 +48,20 @@ export class Game extends Scene {
     this.levelConfig = data.levelConfig || {
       pickupStrategy: new HoverPickupStrategy(60),
       placementEventName: "bookcase-clicked",
-      resolveTargets: (bc: Bookcase) => this.slots.filter((s) => bc.containsId(s.id)),
-      // resolveTargets: (shelf: Shelf) => this.slots.filter((s) => shelf.containsId(s.id)),
-      // resolveTargets: (slot: Slot) => [slot],
       highlightMode: "bookcases",
+    };
+
+    this.levelConfig.resolveTargets = (source: any) => {
+      if (this.levelConfig.highlightMode === "slots") {
+        return [source as Slot];
+      }
+      if (this.levelConfig.highlightMode === "shelves") {
+        return this.slots.filter((s) => (source as Shelf).containsId(s.id));
+      }
+      if (this.levelConfig.highlightMode === "bookcases") {
+        return this.slots.filter((s) => (source as Bookcase).containsId(s.id));
+      }
+      return [];
     };
 
     this.slots = [];
@@ -166,7 +176,8 @@ export class Game extends Scene {
   }
 
   private async handlePlacementAttempt(source: any) {
-    const targetSlots = this.levelConfig.resolveTargets(source);
+    console.log("resolve with: ", source);
+    const targetSlots = this.levelConfig.resolveTargets?.(source);
     if (!targetSlots || targetSlots.length === 0) return;
 
     const booksInHand = this.handManager.getBooks();

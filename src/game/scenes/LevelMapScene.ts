@@ -4,6 +4,7 @@ import { BASE_POSITIONS, SEGMENT_WIDTH, VISIBLE_AHEAD, VISIBLE_BEHIND } from "..
 import { LibraryBuilding } from "../view/LibraryBuilding";
 import { GameState } from "../core/GameState";
 import { globalGame } from "../global/GlobalGame";
+import { LevelConfigBuilder } from "../core/LevelConfigBuilder";
 
 export class LevelMapScene extends Scene {
   private gameState: GameState;
@@ -149,10 +150,11 @@ export class LevelMapScene extends Scene {
       Phaser.Geom.Rectangle.Contains,
     );
 
-    // 🛡️ .once гарантирует, что клик обработается ровно один раз
     this.uiPanel.once("pointerdown", () => {
       console.log(`🚀 Запуск уровня ${building.levelId}`);
-      this.scene.start("Game");
+      this.scene.start("Game", {
+        levelConfig: new LevelConfigBuilder().withClickPickup(10).withBookcaseHighlight().build(),
+      });
     });
   }
 

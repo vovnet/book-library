@@ -11,6 +11,6 @@ export type HighlightMode = "slots" | "shelves" | "bookcases";
 export interface LevelConfig {
   pickupStrategy: HandLayoutStrategy;
   placementEventName: keyof GameEvents;
-  resolveTargets: TargetResolver;
   highlightMode: HighlightMode;
+  resolveTargets?: TargetResolver;
 }
