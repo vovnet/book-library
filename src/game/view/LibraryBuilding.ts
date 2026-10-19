@@ -1,4 +1,3 @@
-// view/LevelMap/LibraryBuilding.ts
 import { Scene, GameObjects } from "phaser";
 
 export class LibraryBuilding extends GameObjects.Container {

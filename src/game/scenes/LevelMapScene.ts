@@ -12,7 +12,6 @@ import { UIScene } from "./UIScene";
 export class LevelMapScene extends Scene {
   private gameState: GameState;
   private buildings: LibraryBuilding[] = [];
-  private selectedBuilding: LibraryBuilding | null = null;
 
   constructor() {
     super({ key: "LevelMap" });
@@ -22,7 +21,6 @@ export class LevelMapScene extends Scene {
 
   init() {
     this.gameState = globalGame.gameState;
-    console.log("init: ", this.gameState.level, this.registry.list);
 
     const screenWidth = this.scale.width;
     const screenHeight = this.scale.height;
@@ -58,6 +56,7 @@ export class LevelMapScene extends Scene {
     }
 
     this.events.on("building-selected", this.handleBuildingSelection, this);
+    this.events.once("shutdown", this.shutdown, this);
 
     // При старте просто центрируем камеру, панель НЕ показываем
     const currentBuilding = this.buildings.find((b) => b.levelId === this.gameState.level);
@@ -73,17 +72,13 @@ export class LevelMapScene extends Scene {
     return { x: basePos.x + segmentIndex * SEGMENT_WIDTH, y: basePos.y };
   }
 
-  // 🌟 МАКСИМАЛЬНО ПРОСТОЙ ОБРАБОТЧИК КЛИКА
   private handleBuildingSelection(building: LibraryBuilding) {
-    if (!building.isCurrent) return;
-
-    if (this.selectedBuilding === building) return;
-
-    this.selectedBuilding = building;
+    console.log("click by: ", { building, all: this.buildings });
 
     this.centerCameraOnBuilding(building, true);
 
     const uiScene = this.scene.get("UIScene") as UIScene;
+
     new StartLevelModal(
       uiScene,
       (selections) => this.confirmStartLevel(building, selections),
@@ -150,7 +145,7 @@ export class LevelMapScene extends Scene {
   }
 
   shutdown() {
-    console.log("shotdown");
+    console.log("shutdown");
     this.events.off("building-selected", this.handleBuildingSelection, this);
   }
 }
