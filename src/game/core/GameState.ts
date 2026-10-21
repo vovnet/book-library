@@ -2,6 +2,7 @@ import { Utils } from "phaser";
 import { emitEvent } from "./EventBus";
 import { BoosterId } from "../registers/boosters";
 import { ResourceId } from "../registers/resources";
+import { CraftingManager } from "./CraftingManager";
 
 export interface GameStateData {
   level: number;
@@ -59,10 +60,13 @@ export class GameState {
   }
 
   getResource(id: ResourceId) {
-    return this.data.resources[id];
+    return this.data.resources[id] ?? 0;
   }
 
   addResource(id: ResourceId, value: number) {
+    if (!this.data.resources[id]) {
+      this.data.resources[id] = 0;
+    }
     this.data.resources[id] += value;
     this.emitDataChanged();
   }
@@ -81,7 +85,18 @@ export class GameState {
   public useBooster(id: BoosterId): boolean {
     if (this.getBoosterCount(id) <= 0) return false;
     this.data.boosters[id]--;
-    this.emitDataChanged;
+    this.emitDataChanged();
+    return true;
+  }
+
+  public spendResources(boosterId: BoosterId): boolean {
+    if (!CraftingManager.canCraft(boosterId, this.data.resources)) {
+      console.warn(`⚠️ Недостаточно ресурсов для крафта ${boosterId}`);
+      return false;
+    }
+
+    CraftingManager.consumeResources(boosterId, this.data.resources);
+    this.emitDataChanged();
     return true;
   }
 
