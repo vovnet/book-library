@@ -1,5 +1,6 @@
 import { BlendModes, Scene } from "phaser";
 import { Slot } from "../view/Slot";
+import { ResourceId } from "../registers/resources";
 
 export class LevelFeedbackManager {
   constructor(private scene: Scene) {}
@@ -64,6 +65,43 @@ export class LevelFeedbackManager {
       ease: "Power2", // Плавное замедление
       onComplete: () => {
         floatingText.destroy(); // 🌟 КРИТИЧЕСКИ ВАЖНО: уничтожаем объект после анимации
+      },
+    });
+  }
+
+  showResourcePopup(x: number, y: number, resourceId: ResourceId) {
+    const icons: Record<ResourceId, string> = {
+      "1": "🎗",
+      "2": "💎",
+      "3": "⭐",
+      "4": "💎",
+      "5": "💎",
+      "6": "💎",
+    };
+
+    // Создаем текст (можно заменить на Sprite с иконкой)
+    const popup = this.scene.add
+      .text(x, y - 20, `${icons[resourceId]} +1`, {
+        fontFamily: "Arial",
+        fontSize: "24px",
+        color: "#ffd700",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setDepth(150);
+
+    // Анимация всплытия и исчезновения
+    this.scene.tweens.add({
+      targets: popup,
+      y: y - 80, // Всплывает вверх на 60 пикселей
+      alpha: 0, // Исчезает
+      scale: 1.2, // Чуть увеличивается
+      duration: 800,
+      ease: "Sine.easeOut",
+      onComplete: () => {
+        popup.destroy(); // Обязательно уничтожаем, чтобы не забивать память
       },
     });
   }

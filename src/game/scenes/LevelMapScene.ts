@@ -138,6 +138,12 @@ export class LevelMapScene extends Scene {
 
     const finalLevelConfig = builder.build();
 
+    finalLevelConfig.resources = [
+      { id: "1", amount: 15 },
+      { id: "2", amount: 8 },
+      { id: "3", amount: 5 },
+    ];
+
     this.scene.start("Game", {
       levelConfig: finalLevelConfig,
       levelNumber: building.levelId,

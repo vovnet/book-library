@@ -1,4 +1,5 @@
 import { Scene, GameObjects, Tweens } from "phaser";
+import { ResourceId } from "../registers/resources";
 
 export class LevelCompleteOverlay {
   private scene: Scene;
@@ -11,7 +12,8 @@ export class LevelCompleteOverlay {
     this.onContinueCallback = onContinue;
   }
 
-  public show(): void {
+  public show(resources?: Record<ResourceId, number>): void {
+    console.log("end with resources: ", resources);
     const width = this.scene.scale.width;
     const height = this.scene.scale.height;
     const centerX = width / 2;

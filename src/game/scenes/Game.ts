@@ -10,12 +10,14 @@ import {
   HoverPickupStrategy,
 } from "../core/HandStrategies";
 import { Shelf } from "../view/Shelf";
-import { LevelConfig } from "../core/types";
+import { LevelConfig, LevelResourceConfig } from "../core/types";
 import { LevelFeedbackManager } from "../core/LevelFeedbackManager";
 import { Bookcase } from "../view/Bookcase";
 import { LevelCompleteOverlay } from "../view/LevelCompleteOverlay";
 import { GameState } from "../core/GameState";
 import { globalGame } from "../global/GlobalGame";
+import { LootDistributor } from "../core/LootDistributor";
+import { ResourceId } from "../registers/resources";
 
 export class Game extends Scene {
   private readonly CONFIG = {
@@ -80,6 +82,16 @@ export class Game extends Scene {
     this.books = [];
     this.shelves = [];
     this.bookcases = [];
+
+    const resources: Record<ResourceId, number> = {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+    };
+    this.data.set("resources", resources);
 
     this.events.once("shutdown", this.shutdown, this);
   }
@@ -175,6 +187,12 @@ export class Game extends Scene {
       this.add.existing(book);
     });
 
+    const { resources } = this.sys.getData().levelConfig as LevelConfig;
+
+    if (resources) {
+      LootDistributor.distribute(this.books, resources);
+    }
+
     this.setupInputListeners();
   }
 
@@ -230,27 +248,43 @@ export class Game extends Scene {
     const isLevelCompleted = !this.books.some((b) => b.location !== "slot");
 
     if (isLevelCompleted) {
+      const resources = this.data.get("resources");
+
       const overflow = new LevelCompleteOverlay(this, () => {
         const { gameState, saveManager } = globalGame;
         gameState.level++;
-        console.log("close: ", gameState.level);
+        gameState.addResources(resources);
         saveManager.save();
         this.scene.start("MainScene");
       });
       await this.delay(2000);
-      overflow.show();
+
+      overflow.show(resources);
     }
   }
 
   private async handleBookPicked(book: Book) {
     const books = await this.handManager.addBook(book);
-    if (books) {
-      this.updateHighlights();
+
+    if (!books) {
+      return;
     }
+
+    this.updateHighlights();
   }
 
   private async placeBookInSlot(book: Book, slot: Slot) {
     book.stopLevitation();
+
+    const droppedResource = book.consumeResource();
+    if (droppedResource) {
+      this.feedback.showResourcePopup(book.x, book.y, droppedResource);
+      // Добавляем в глобальное состояние (нужно добавить этот метод в GameState)
+      const resources = this.data.get("resources") as Record<ResourceId, number>;
+      resources[droppedResource]++;
+      this.data.set("resources", { ...resources });
+      // globalGame.gameState.addResource(droppedResource, 1);
+    }
 
     await book.flyTo(slot.x, slot.y);
     book.setLocation("slot");
@@ -259,6 +293,7 @@ export class Game extends Scene {
     slot.setBook(book);
 
     this.feedback.showFloatingText(slot.x, slot.y, "+1", "#feffc1");
+
     this.checkCompletions(slot);
   }
 
@@ -347,5 +382,6 @@ export class Game extends Scene {
     this.shelves = [];
     this.slots = [];
     this.books = [];
+    this.data.remove("resources");
   }
 }

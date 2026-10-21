@@ -9,10 +9,6 @@ export class Main extends Scene {
   preload() {}
 
   create() {
-    globalGame.gameState.addBooster("magnetto", 20);
-    globalGame.gameState.addBooster("hand", 20);
-    globalGame.gameState.addBooster("hardIntuition", 20);
-
     this.scene.launch("LevelMap");
     this.scene.launch("UIScene");
   }

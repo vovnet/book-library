@@ -1,3 +1,4 @@
+import { ResourceId } from "../registers/resources";
 import { Slot } from "../view/Slot";
 import { GameEvents } from "./EventBus";
 
@@ -13,4 +14,10 @@ export interface LevelConfig {
   highlightMode: HighlightMode;
   maxBooks: number;
   resolveTargets?: TargetResolver;
+  resources?: LevelResourceConfig[];
+}
+
+export interface LevelResourceConfig {
+  id: ResourceId;
+  amount: number;
 }

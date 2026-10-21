@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import { emitEvent } from "../core/EventBus";
 import { BOOK_COLORS, BookState } from "../generators/BookTextereGenerator";
+import { ResourceId } from "../registers/resources";
 
 export class Book extends Phaser.GameObjects.Sprite {
   public id: string;
@@ -11,6 +12,8 @@ export class Book extends Phaser.GameObjects.Sprite {
 
   private slideTween: Phaser.Tweens.Tween | null = null;
   private colorIndex: number;
+
+  private hiddenResourceId: ResourceId | null = null;
 
   private static shuffledIndices: number[] = [];
 
@@ -137,5 +140,15 @@ export class Book extends Phaser.GameObjects.Sprite {
       this.levitationTween = null;
       this.y = this.baseY;
     }
+  }
+
+  public setResourceId(id: ResourceId | null) {
+    this.hiddenResourceId = id;
+  }
+
+  public consumeResource(): ResourceId | null {
+    const resource = this.hiddenResourceId;
+    this.hiddenResourceId = null;
+    return resource;
   }
 }
