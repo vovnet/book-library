@@ -1,9 +1,10 @@
-import { Scene, GameObjects, Geom } from "phaser";
+import { Scene, GameObjects } from "phaser";
 import { GameState } from "../core/GameState";
 import { BoosterId, boosters } from "../registers/boosters";
 import { globalGame } from "../global/GlobalGame";
+import { BaseModal } from "./ui/BaseModal";
 
-export class StartLevelModal extends GameObjects.Container {
+export class StartLevelModal extends BaseModal {
   private gameState: GameState;
   // Храним выбор как Record<string, boolean>, а не жесткий тип
   private pendingSelections: Record<BoosterId, boolean> = {
@@ -22,82 +23,16 @@ export class StartLevelModal extends GameObjects.Container {
     onConfirm: (selections: Record<BoosterId, boolean>) => void,
     onCancel: () => void,
   ) {
-    super(scene, scene.scale.width / 2, scene.scale.height / 2);
+    super(scene, "УРОВЕНЬ", 460, 600);
 
     this.gameState = globalGame.gameState;
     this.onConfirm = onConfirm;
     this.onCancel = onCancel;
 
-    this.buildUI();
-
-    scene.add.existing(this);
-    this.setDepth(1000);
-    this.setScale(0.8).setAlpha(0);
-
-    scene.tweens.add({ targets: this, scale: 1, alpha: 1, duration: 300, ease: "Back.out" });
+    this.buildContent();
   }
 
-  private buildUI() {
-    const w = this.scene.scale.width;
-    const h = this.scene.scale.height;
-
-    const overlay = this.scene.add.rectangle(0, 0, w * 2, h * 2, 0x000000, 0.7).setInteractive();
-    overlay.on("pointerdown", () => this.close());
-    this.add(overlay);
-
-    const modalWidth = 460;
-    const modalHeight = 600;
-
-    const modalBg = this.scene.add.nineslice(
-      0,
-      0,
-      "ui",
-      "modal",
-      modalWidth,
-      modalHeight,
-      36,
-      36,
-      50,
-      50,
-    );
-
-    modalBg.setInteractive(
-      new Geom.Rectangle(0, 0, modalWidth, modalHeight),
-      Geom.Rectangle.Contains,
-    );
-
-    this.add(modalBg);
-
-    this.add(this.scene.add.image(0, -modalHeight / 2, "ui", "modal-head").setOrigin(0.5, 0));
-    this.add(
-      this.scene.add
-        .text(-0, -modalHeight / 2 + 40, "ЗАГОЛОВОК", {
-          fontFamily: "Arial",
-          fontSize: "28px",
-          color: "#ffffff",
-          fontStyle: "bold",
-        })
-        .setOrigin(0.5),
-    );
-
-    const closeBtn = this.scene.add
-      .sprite(modalWidth / 2 - 20, -modalHeight / 2 + 20, "ui", "close-btn")
-      .setInteractive()
-      .once("pointerdown", () => this.close(), this);
-
-    this.add(closeBtn);
-
-    this.add(
-      this.scene.add
-        .text(0, -120, "Выберите бустеры", {
-          fontFamily: "Arial",
-          fontSize: "22px",
-          color: "#ffd700",
-          fontStyle: "bold",
-        })
-        .setOrigin(0.5),
-    );
-
+  protected buildContent() {
     let yOffset = -70;
 
     boosters.forEach((def) => {
@@ -186,19 +121,13 @@ export class StartLevelModal extends GameObjects.Container {
     gfx.fillRoundedRect(-20, -15, 40, 30, 5);
   }
 
-  private close(confirmed: boolean = false) {
-    console.log("close");
-    this.scene.tweens.add({
-      targets: this,
-      scale: 0.8,
-      alpha: 0,
-      duration: 200,
-      ease: "Power2",
-      onComplete: () => {
-        this.destroy();
-        if (confirmed) this.onConfirm(this.pendingSelections);
-        else this.onCancel();
-      },
+  public close(confirmed: boolean = false): void {
+    this.playCloseAnimation(() => {
+      if (confirmed) {
+        this.onConfirm(this.pendingSelections);
+      } else {
+        this.onCancel();
+      }
     });
   }
 }
