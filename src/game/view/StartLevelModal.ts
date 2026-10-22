@@ -1,4 +1,4 @@
-import { Scene, GameObjects } from "phaser";
+import { Scene, GameObjects, Geom } from "phaser";
 import { GameState } from "../core/GameState";
 import { BoosterId, boosters } from "../registers/boosters";
 import { globalGame } from "../global/GlobalGame";
@@ -45,12 +45,37 @@ export class StartLevelModal extends GameObjects.Container {
     overlay.on("pointerdown", () => this.close());
     this.add(overlay);
 
-    const modalBg = this.scene.add.graphics();
-    modalBg.fillStyle(0x1a1a1a, 1);
-    modalBg.fillRoundedRect(-200, -150, 400, 400, 15);
-    modalBg.lineStyle(2, 0xffd700, 1);
-    modalBg.strokeRoundedRect(-200, -150, 400, 400, 15);
+    const modalWidth = 460;
+    const modalHeight = 600;
+
+    const modalBg = this.scene.add.nineslice(
+      0,
+      0,
+      "ui",
+      "modal",
+      modalWidth,
+      modalHeight,
+      36,
+      36,
+      50,
+      50,
+    );
+
+    modalBg.setInteractive(
+      new Geom.Rectangle(0, 0, modalWidth, modalHeight),
+      Geom.Rectangle.Contains,
+    );
+
     this.add(modalBg);
+
+    this.add(this.scene.add.image(0, -modalHeight / 2, "ui", "modal-head").setOrigin(0.5, 0));
+
+    const closeBtn = this.scene.add
+      .sprite(modalWidth / 2 - 20, -modalHeight / 2 + 20, "ui", "close-btn")
+      .setInteractive()
+      .once("pointerdown", () => this.close(), this);
+
+    this.add(closeBtn);
 
     this.add(
       this.scene.add

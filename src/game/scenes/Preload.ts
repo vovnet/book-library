@@ -83,6 +83,8 @@ export class Preload extends Scene {
 
     this.load.image("book-cover-slot", "cover-slot.png");
 
+    this.load.atlas("ui", "ui_spritesheet.png", "ui_spritesheet.json");
+
     await globalGame.init();
 
     // Звуки (раскомментируй, когда добавишь файлы)
