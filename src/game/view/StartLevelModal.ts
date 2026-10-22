@@ -69,6 +69,16 @@ export class StartLevelModal extends GameObjects.Container {
     this.add(modalBg);
 
     this.add(this.scene.add.image(0, -modalHeight / 2, "ui", "modal-head").setOrigin(0.5, 0));
+    this.add(
+      this.scene.add
+        .text(-0, -modalHeight / 2 + 40, "ЗАГОЛОВОК", {
+          fontFamily: "Arial",
+          fontSize: "28px",
+          color: "#ffffff",
+          fontStyle: "bold",
+        })
+        .setOrigin(0.5),
+    );
 
     const closeBtn = this.scene.add
       .sprite(modalWidth / 2 - 20, -modalHeight / 2 + 20, "ui", "close-btn")
