@@ -84,7 +84,7 @@ export abstract class BaseModal extends GameObjects.Container {
 
     // 5. Кнопка закрытия
     const closeBtn = this.scene.add
-      .sprite(this.modalWidth / 2 - 20, -this.modalHeight / 2 + 20, "ui", "close-btn")
+      .sprite(this.modalWidth / 2 - 6, -this.modalHeight / 2 + 8, "ui", "close-btn")
       .setInteractive({ useHandCursor: true });
 
     closeBtn.on("pointerdown", () => this.onDismiss());
