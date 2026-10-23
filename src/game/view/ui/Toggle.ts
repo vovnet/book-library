@@ -17,9 +17,6 @@ export class Toggle extends GameObjects.Container {
   private isOn: boolean;
   private isDisabled: boolean;
 
-  private offTint: number;
-  private onTint: number;
-
   private onChangeCallback: ((isOn: boolean) => void) | null = null;
 
   constructor(scene: Scene, config: ToggleConfig) {
@@ -27,11 +24,10 @@ export class Toggle extends GameObjects.Container {
 
     this.isOn = config.initialState ?? false;
     this.isDisabled = config.disabled ?? false;
-    this.offTint = config.offTint ?? 0x666666; // Серый по умолчанию
-    this.onTint = config.onTint ?? 0xffffff; // Белый по умолчанию
 
     // Создаём иконку
     this.icon = scene.add.image(0, 0, config.textureKey, config.frame);
+    this.icon.enableFilters();
 
     if (config.scale) {
       this.icon.setScale(config.scale);
@@ -40,7 +36,7 @@ export class Toggle extends GameObjects.Container {
     this.add(this.icon);
 
     // Применяем начальное состояние
-    this.applyTint(false);
+    this.applyTint();
 
     // Интерактивность
     if (!this.isDisabled) {
@@ -81,23 +77,11 @@ export class Toggle extends GameObjects.Container {
   /**
    * Применяет tint с плавной анимацией
    */
-  private applyTint(animate: boolean): void {
-    const targetTint = this.isOn ? this.onTint : this.offTint;
-
-    if (animate) {
-      // Плавная смена tint через alpha-эффект
-      this.icon.setAlpha(0.7);
-      this.scene.tweens.add({
-        targets: this.icon,
-        alpha: 1,
-        duration: 150,
-        ease: "Power2",
-        onStart: () => {
-          this.icon.setTint(targetTint);
-        },
-      });
+  private applyTint(): void {
+    if (this.isOn) {
+      this.icon.filters?.internal.clear();
     } else {
-      this.icon.setTint(targetTint);
+      this.icon.filters?.internal.addColorMatrix().colorMatrix.sepia();
     }
   }
 
@@ -110,7 +94,7 @@ export class Toggle extends GameObjects.Container {
     if (this.isOn === value) return;
 
     this.isOn = value;
-    this.applyTint(true);
+    this.applyTint();
 
     if (emitEvent && this.onChangeCallback) {
       this.onChangeCallback(this.isOn);
@@ -145,15 +129,6 @@ export class Toggle extends GameObjects.Container {
       this.icon.setInteractive({ useHandCursor: true });
       this.icon.setAlpha(1);
     }
-  }
-
-  /**
-   * Меняет цвета tint на лету
-   */
-  public setTintColors(offTint: number, onTint: number): void {
-    this.offTint = offTint;
-    this.onTint = onTint;
-    this.applyTint(false);
   }
 
   /**
