@@ -37,7 +37,7 @@ export class StartLevelModal extends BaseModal {
     let yOffset = -70;
 
     const boostersText = this.scene.add
-      .text(this.width / 2, yOffset - 80, "Выбери бустеры", {
+      .text(this.width / 2, yOffset - 100, "Выбери бустеры", {
         fontFamily: "Seym",
         fontSize: "24px",
         color: "#ffd700",
