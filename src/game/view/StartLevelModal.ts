@@ -1,8 +1,9 @@
-import { Scene, GameObjects } from "phaser";
+import { Scene } from "phaser";
 import { GameState } from "../core/GameState";
 import { BoosterId, boosters } from "../registers/boosters";
 import { globalGame } from "../global/GlobalGame";
 import { BaseModal } from "./ui/BaseModal";
+import { Toggle } from "./ui/Toggle";
 
 export class StartLevelModal extends BaseModal {
   private gameState: GameState;
@@ -14,7 +15,7 @@ export class StartLevelModal extends BaseModal {
     magnetto: false,
   };
 
-  private toggleGraphics: Map<string, GameObjects.Graphics> = new Map();
+  private toggleGraphics: Map<string, Toggle> = new Map();
   private onConfirm: (selections: Record<BoosterId, boolean>) => void;
   private onCancel: () => void;
 
@@ -72,7 +73,7 @@ export class StartLevelModal extends BaseModal {
 
       // Количество
       row.add(
-        this.scene.add.text(80, -20, `x${count}`, {
+        this.scene.add.text(100, -20, `x${count}`, {
           fontFamily: "Seym",
           fontSize: "12px",
           color: "#777151",
@@ -80,37 +81,43 @@ export class StartLevelModal extends BaseModal {
       );
 
       // Тоггл
-      const toggleBg = this.scene.add.graphics({ x: 40, y: -10 });
-      this.toggleGraphics.set(def.id, toggleBg);
-      row.add(toggleBg);
-
-      const toggleZone = this.scene.add
-        .rectangle(40, -10, 40, 30, 0x000000, 0)
-        .setInteractive({ useHandCursor: isAvailable });
+      const toggle = new Toggle(this.scene, {
+        x: 40,
+        y: -10,
+        textureKey: "ui",
+        frame: def.iconKey,
+        disabled: !isAvailable,
+      });
+      this.toggleGraphics.set(def.id, toggle);
+      row.add(toggle);
 
       if (isAvailable) {
-        toggleZone.on("pointerdown", () => {
-          this.pendingSelections[def.id] = !this.pendingSelections[def.id];
-          if (def.id === "intuition" && this.pendingSelections[def.id]) {
+        toggle.onChange((isOn) => {
+          this.pendingSelections[def.id] = isOn;
+          // 🌟 Если ВКЛЮЧИЛИ intuition -> программно ВЫКЛЮЧАЕМ hardIntuition
+          if (def.id === "intuition" && isOn) {
             this.pendingSelections["hardIntuition"] = false;
-            this.updateToggleVisual("hardIntuition");
+            // false, false = выключить и НЕ вызывать onChange рекурсивно
+            this.toggleGraphics.get("hardIntuition")?.setOn(false, false);
           }
-          if (def.id === "hardIntuition" && this.pendingSelections["intuition"]) {
+
+          // 🌟 Если ВКЛЮЧИЛИ hardIntuition -> программно ВЫКЛЮЧАЕМ intuition
+          if (def.id === "hardIntuition" && isOn) {
             this.pendingSelections["intuition"] = false;
-            this.updateToggleVisual("intuition");
+            this.toggleGraphics.get("intuition")?.setOn(false, false);
           }
           this.updateToggleVisual(def.id);
         });
       }
-      row.add(toggleZone);
+
       this.add(row);
 
       this.updateToggleVisual(def.id);
-      yOffset += 60; // Чуть больше места для описания
+      yOffset += 80; // Чуть больше места для описания
     });
 
     // Кнопка старта
-    const startContainer = this.scene.add.container(0, 210);
+    const startContainer = this.scene.add.container(0, 250);
     const startBg = this.scene.add.graphics();
     startBg.fillStyle(0xffd700, 1).fillRoundedRect(-100, -20, 200, 40, 10);
     startContainer.add(startBg);
@@ -135,10 +142,8 @@ export class StartLevelModal extends BaseModal {
   }
 
   private updateToggleVisual(id: BoosterId) {
-    const gfx = this.toggleGraphics.get(id)!;
-    gfx.clear();
-    gfx.fillStyle(this.pendingSelections[id] ? 0x00ff00 : 0x444444, 1);
-    gfx.fillRoundedRect(-20, -15, 40, 30, 5);
+    const toggle = this.toggleGraphics.get(id)!;
+    toggle.setOn(this.pendingSelections[id]);
   }
 
   public close(confirmed: boolean = false): void {

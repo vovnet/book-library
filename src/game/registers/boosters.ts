@@ -8,10 +8,10 @@ export interface BoosterDef {
 }
 
 const map = [
-  { id: "hand", name: "Большая охапка", description: "" },
-  { id: "magnetto", name: "Притяжение", description: "" },
-  { id: "intuition", name: "Быстрая выкладка", description: "" },
-  { id: "hardIntuition", name: "Автораскладка", description: "" },
+  { id: "hand", name: "Большая охапка", description: "", iconKey: "boost-1" },
+  { id: "magnetto", name: "Притяжение", description: "", iconKey: "boost-2" },
+  { id: "intuition", name: "Быстрая выкладка", description: "", iconKey: "boost-3" },
+  { id: "hardIntuition", name: "Автораскладка", description: "", iconKey: "boost-4" },
 ].map((item) => [item.id, item] as [BoosterId, BoosterDef]);
 
 export const boosters: Map<BoosterId, BoosterDef> = new Map(map);
