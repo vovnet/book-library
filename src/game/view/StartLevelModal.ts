@@ -25,7 +25,7 @@ export class StartLevelModal extends BaseModal {
     onConfirm: (selections: Record<BoosterId, boolean>) => void,
     onCancel: () => void,
   ) {
-    super(scene, "УРОВЕНЬ", 460, 600);
+    super(scene, "УРОВЕНЬ", 460, 640);
 
     this.gameState = globalGame.gameState;
     this.onConfirm = onConfirm;
@@ -35,7 +35,7 @@ export class StartLevelModal extends BaseModal {
   }
 
   protected buildContent() {
-    let yOffset = -70;
+    let yOffset = -80;
 
     const boostersText = this.scene.add
       .text(this.width / 2, yOffset - 100, "Выбери бустеры", {
@@ -57,6 +57,9 @@ export class StartLevelModal extends BaseModal {
       this.pendingSelections[def.id] = false;
 
       const row = this.scene.add.container(0, yOffset);
+
+      const rowBg = this.scene.add.nineslice(0, -10, "ui", "area-1", 400, 76, 16, 16, 16, 16);
+      row.add(rowBg);
 
       // Название и описание (можно сделать тултип)
       const nameText = this.scene.add
@@ -114,32 +117,10 @@ export class StartLevelModal extends BaseModal {
       this.add(row);
 
       this.updateToggleVisual(def.id);
-      yOffset += 80; // Чуть больше места для описания
+      yOffset += 84; // Чуть больше места для описания
     });
 
-    // Кнопка старта
-    // const startContainer = this.scene.add.container(0, 250);
-    // const startBg = this.scene.add.graphics();
-    // startBg.fillStyle(0xffd700, 1).fillRoundedRect(-100, -20, 200, 40, 10);
-    // startContainer.add(startBg);
-
-    // const startText = this.scene.add
-    //   .text(0, 0, "НАЧАТЬ УРОВЕНЬ", {
-    //     fontFamily: "Arial",
-    //     fontSize: "18px",
-    //     color: "#000000",
-    //     fontStyle: "bold",
-    //   })
-    //   .setOrigin(0.5);
-    // startContainer.add(startText);
-
-    // const startZone = this.scene.add
-    //   .rectangle(0, 0, 200, 40, 0x000000, 0)
-    //   .setInteractive({ useHandCursor: true });
-    // startZone.on("pointerdown", () => this.close(true));
-    // startContainer.add(startZone);
-
-    const startBtn = new UIButton(this.scene, 0, 250, {
+    const startBtn = new UIButton(this.scene, 0, 260, {
       text: "Начать",
       variant: "primary",
       align: "center",
