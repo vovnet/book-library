@@ -4,6 +4,7 @@ import { BoosterId, boosters } from "../registers/boosters";
 import { globalGame } from "../global/GlobalGame";
 import { BaseModal } from "./ui/BaseModal";
 import { Toggle } from "./ui/Toggle";
+import { UIButton } from "./ui/UIButton";
 
 export class StartLevelModal extends BaseModal {
   private gameState: GameState;
@@ -117,28 +118,35 @@ export class StartLevelModal extends BaseModal {
     });
 
     // Кнопка старта
-    const startContainer = this.scene.add.container(0, 250);
-    const startBg = this.scene.add.graphics();
-    startBg.fillStyle(0xffd700, 1).fillRoundedRect(-100, -20, 200, 40, 10);
-    startContainer.add(startBg);
+    // const startContainer = this.scene.add.container(0, 250);
+    // const startBg = this.scene.add.graphics();
+    // startBg.fillStyle(0xffd700, 1).fillRoundedRect(-100, -20, 200, 40, 10);
+    // startContainer.add(startBg);
 
-    const startText = this.scene.add
-      .text(0, 0, "НАЧАТЬ УРОВЕНЬ", {
-        fontFamily: "Arial",
-        fontSize: "18px",
-        color: "#000000",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5);
-    startContainer.add(startText);
+    // const startText = this.scene.add
+    //   .text(0, 0, "НАЧАТЬ УРОВЕНЬ", {
+    //     fontFamily: "Arial",
+    //     fontSize: "18px",
+    //     color: "#000000",
+    //     fontStyle: "bold",
+    //   })
+    //   .setOrigin(0.5);
+    // startContainer.add(startText);
 
-    const startZone = this.scene.add
-      .rectangle(0, 0, 200, 40, 0x000000, 0)
-      .setInteractive({ useHandCursor: true });
-    startZone.on("pointerdown", () => this.close(true));
-    startContainer.add(startZone);
+    // const startZone = this.scene.add
+    //   .rectangle(0, 0, 200, 40, 0x000000, 0)
+    //   .setInteractive({ useHandCursor: true });
+    // startZone.on("pointerdown", () => this.close(true));
+    // startContainer.add(startZone);
 
-    this.add(startContainer);
+    const startBtn = new UIButton(this.scene, 0, 250, {
+      text: "Начать",
+      variant: "primary",
+      align: "center",
+      onClick: () => this.close(true),
+    });
+
+    this.add(startBtn);
   }
 
   private updateToggleVisual(id: BoosterId) {
