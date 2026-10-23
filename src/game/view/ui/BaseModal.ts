@@ -74,10 +74,10 @@ export abstract class BaseModal extends GameObjects.Container {
     this.add(
       this.scene.add
         .text(0, -this.modalHeight / 2 + 40, title, {
-          fontFamily: "Arial",
+          fontFamily: "Seym",
           fontSize: "28px",
           color: "#ffffff",
-          fontStyle: "bold",
+          // fontStyle: "bold",
         })
         .setOrigin(0.5),
     );

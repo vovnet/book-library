@@ -26,6 +26,31 @@
       }
     },
     {
+      "filename": "modal",
+      "frame": {
+        "x": 304,
+        "y": 2,
+        "w": 80,
+        "h": 120
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 120
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 120
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
       "filename": "simple-btn",
       "frame": {
         "x": 2,
@@ -51,35 +76,10 @@
       }
     },
     {
-      "filename": "modal",
+      "filename": "close-btn",
       "frame": {
         "x": 179,
         "y": 95,
-        "w": 76,
-        "h": 100
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 76,
-        "h": 100
-      },
-      "sourceSize": {
-        "w": 76,
-        "h": 100
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
-      "filename": "close-btn",
-      "frame": {
-        "x": 2,
-        "y": 144,
         "w": 63,
         "h": 63
       },
@@ -107,8 +107,8 @@
     "image": "ui_spritesheet.png",
     "format": "RGBA8888",
     "size": {
-      "w": 302,
-      "h": 209
+      "w": 386,
+      "h": 160
     },
     "scale": 1
   }

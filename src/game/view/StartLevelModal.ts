@@ -35,6 +35,18 @@ export class StartLevelModal extends BaseModal {
   protected buildContent() {
     let yOffset = -70;
 
+    const boostersText = this.scene.add
+      .text(this.width / 2, yOffset - 80, "Выбери бустеры", {
+        fontFamily: "Seym",
+        fontSize: "24px",
+        color: "#ffd700",
+        stroke: "#363636",
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5);
+
+    this.add(boostersText);
+
     boosters.forEach((def) => {
       const count = this.gameState.getBoosterCount(def.id);
       const isAvailable = count > 0;
@@ -45,19 +57,27 @@ export class StartLevelModal extends BaseModal {
       const row = this.scene.add.container(0, yOffset);
 
       // Название и описание (можно сделать тултип)
-      const nameText = this.scene.add.text(-150, -10, def.name, {
-        fontSize: "18px",
-        color: isAvailable ? "#ffffff" : "#666666",
-        fontStyle: "bold",
-      });
-      const descText = this.scene.add.text(-150, 12, def.description || "", {
-        fontSize: "14px",
-        color: isAvailable ? "#aaaaaa" : "#555555",
-      });
-      row.add([nameText, descText]);
+      const nameText = this.scene.add
+        .text(-180, -10, def.name, {
+          fontFamily: "Seym",
+          fontSize: "14px",
+          color: isAvailable ? "#ececec" : "#acacac",
+          wordWrap: { width: 100 },
+          stroke: "#363636",
+          strokeThickness: 4,
+        })
+        .setOrigin(0, 0.5);
+
+      row.add([nameText]);
 
       // Количество
-      row.add(this.scene.add.text(60, 0, `x${count}`, { fontSize: "18px", color: "#ffd700" }));
+      row.add(
+        this.scene.add.text(60, 0, `x${count}`, {
+          fontFamily: "Seym",
+          fontSize: "12px",
+          color: "#777151",
+        }),
+      );
 
       // Тоггл
       const toggleBg = this.scene.add.graphics();

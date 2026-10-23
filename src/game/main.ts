@@ -20,7 +20,9 @@ const config: Types.Core.GameConfig = {
   scene: [Preload, Main, LevelMapScene, MainGame, UIScene],
 };
 
-const StartGame = (parent: string) => {
+const StartGame = async (parent: string) => {
+  await document.fonts.ready;
+
   return new Game({ ...config, parent });
 };
 
