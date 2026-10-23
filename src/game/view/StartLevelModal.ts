@@ -72,7 +72,7 @@ export class StartLevelModal extends BaseModal {
 
       // Количество
       row.add(
-        this.scene.add.text(60, 0, `x${count}`, {
+        this.scene.add.text(80, -20, `x${count}`, {
           fontFamily: "Seym",
           fontSize: "12px",
           color: "#777151",
@@ -80,12 +80,12 @@ export class StartLevelModal extends BaseModal {
       );
 
       // Тоггл
-      const toggleBg = this.scene.add.graphics();
+      const toggleBg = this.scene.add.graphics({ x: 40, y: -10 });
       this.toggleGraphics.set(def.id, toggleBg);
       row.add(toggleBg);
 
       const toggleZone = this.scene.add
-        .rectangle(0, 0, 40, 30, 0x000000, 0)
+        .rectangle(40, -10, 40, 30, 0x000000, 0)
         .setInteractive({ useHandCursor: isAvailable });
 
       if (isAvailable) {
