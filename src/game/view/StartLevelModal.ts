@@ -124,6 +124,7 @@ export class StartLevelModal extends BaseModal {
       text: "Начать",
       variant: "primary",
       align: "center",
+      fontColor: "#7a5141",
       onClick: () => this.close(true),
     });
 

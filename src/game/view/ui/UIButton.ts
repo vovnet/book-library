@@ -8,6 +8,7 @@ export interface ButtonConfig {
   variant?: ButtonVariant;
   fontSize?: number;
   fontFamily?: string;
+  fontColor?: string;
   paddingX?: number; // Отступы слева и справа
   paddingY?: number; // Отступы сверху и снизу (влияют на высоту)
   iconSpacing?: number; // Расстояние между иконкой и текстом
@@ -37,7 +38,7 @@ export class UIButton extends GameObjects.Container {
       .text(0, 0, config.text, {
         fontFamily: config.fontFamily || "Seym",
         fontSize: `${config.fontSize || 24}px`,
-        color: this.isDisabled ? "#888888" : "#ffffff",
+        color: this.isDisabled ? "#888888" : config.fontColor || "#ffffff",
       })
       .setOrigin(0, 0.5); // 🌟 Выравнивание по левому краю для удобства расчетов
 
